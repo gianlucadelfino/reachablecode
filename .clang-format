@@ -1,0 +1,16 @@
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+BreakBeforeBinaryOperators: false
+ColumnLimit: 80
+Standard: Cpp11
+IndentWidth: 4
+BreakBeforeBraces: Allman
+PointerBindsToType: true
+BinPackParameters: false
+BinPackArguments: false
+CommentPragmas: "/**"
+BreakBeforeTernaryOperators: false
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
+PenaltyReturnTypeOnItsOwnLine: 1000
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
