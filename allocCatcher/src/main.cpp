@@ -25,7 +25,6 @@ int main()
         vec.push_back(i);
     }
 
-    std::cout <<
-                 "Set size " << vec.size() << "\n";
+    std::cout << "Set size " << vec.size() << "\n";
     return 0;
 }
