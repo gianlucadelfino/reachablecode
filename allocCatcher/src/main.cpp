@@ -9,7 +9,7 @@ void* operator new(size_t s)
     return ptr;
 }
 
-// There are just to make the compiler and sanitizer happy
+// These are just to make the compiler and sanitizer happy
 void operator delete(void* ptr_) { free(ptr_); }
 void operator delete(void* ptr_, size_t) { free(ptr_); }
 
