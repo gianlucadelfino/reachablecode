@@ -1,132 +1,141 @@
-#include <iostream>
 #include <array>
-#include <utility>
 #include <cassert>
-//#include <unordered_map>
+#include <iostream>
+#include <memory>
+#include <queue>
+#include <utility>
+#include <vector>
 
-using Buffer = std::array<std::array<char, 80>, 20>;
+#include "Drawing.H"
 
-struct Pos
+//struct DiagramNode
+//{
+//    ClassNode classNode;
+//    Pos pos;
+//    std::vector<std::unique_ptr<DiagramNode>> diagramNode;
+//};
+
+struct ClassNode
 {
-    size_t x{};
-    size_t y{};
-};
+    ClassNode(const std::string& name_) : name(name_) {}
+    const std::string name;
 
-struct Box
-{
-    Pos leftTopCorner;
-    Pos rightBottomCorner;
-};
-
-void render(const Buffer& buf, std::ostream& out)
-{
-   for(size_t i = 0; i < buf.size(); ++i)
-   {
-       const auto& line = buf[i];
-       out << i << "\t";
-       for (auto c : line)
-       {
-           if (c)
-            out << c;
-           else
-            out << '.';
-       }
-       out << "\n";
-   }
-}
-
-void move_closer(size_t& i, size_t destination)
-{
-    if (i < destination)
-        ++i;
-    else if (i > destination)
-        --i;
-
-    // If equal do nothing
-}
-
-void drawLine(const Pos& start, const Pos& end, Buffer& buf)
-{
-    // Draw a straigth line that breaks in the middle point
-    //    --------------,
-    //                  |
-    //                  |
-    //                  '---------->
-
-    // Draw x
-    const size_t midpoint = (start.x + end.x) /2;
-    for (size_t i = start.x; i != midpoint; move_closer(i, midpoint))
+    struct Link
     {
-        // first half
-        std::cout << "i " << i << std::endl;
-        buf[start.y][i] = '-';
-//        const size_t oneIfOdd = (start.x - end.x) & 1;
-//        if (start.x < end.x)
-//        {
-//            buf[end.y][end.x - i + oneIfOdd] = '-';
-//        }
-//        else if (start.x > end.x)
-//        {
-//            buf[end.y][i - end.x - oneIfOdd] = '-';
-//        }
+        Link(const std::string& name_, Relation relation_)
+            : node(std::make_unique<ClassNode>(name_)), relation(relation_)
+        {
+        }
+        Pos drawArrow(const Pos& start, Buffer& buf)
+        {
+            const size_t arrowLength = 15;
+            // Parent classes go up, members go right
+            const Pos end = [this, &start]() -> Pos {
+                if (relation == Relation::Inheritance)
+                {
+                    assert(start.y > arrowLength);
+                    return {start.x, start.y - arrowLength};
+                }
+                else
+                {
+                    return {start.x + arrowLength, start.y};
+                }
+            }();
+
+            drawLine(start, end, buf);
+            drawArrowBegin(start, relation, buf);
+            drawArrowEnd(end, relation, buf);
+            return end;
+        }
+
+        std::unique_ptr<ClassNode> node{};
+        Relation relation{Relation::Unset};
+    };
+
+    Pos pos;
+
+    Pos getRightAnchorPoint() const
+    {
+        return {pos.x + getBoxWidth(), pos.y + 1};
     }
 
-    // Second half
-    for (size_t i = end.x; i != midpoint; move_closer(i, midpoint))
+    Pos getBottomAnchorPoint() const
     {
-        // first half
-        std::cout << "i " << i << std::endl;
-        buf[end.y][i] = '-';
+        return {pos.x + getBoxWidth() / 2, pos.y + 2};
     }
 
-    // Draw the corners and the vertical line
-    if (end.y < start.y)
+    Pos getBottomRightCorner() const
     {
-        // It goes up, so we start with a '
-        buf[start.y][midpoint] = '\'';
-        buf[end.y][midpoint] = ',';
-    }
-    else
-    {
-        // It goes down, so we add a comma
-        buf[start.y][midpoint] = ',';
-        buf[end.y][midpoint] = '\'';
+        return {pos.x + getBoxWidth(), pos.y + 2};
     }
 
-    //
-    size_t j = start.y;
-    move_closer(j, end.y); // Move one step already
+    std::vector<Link> children;
 
-    while(j != end.y)
+    void draw(Buffer& buf) const
     {
-        // Not very cache friendly, but who cares
-        std::cout << "j " << j << std::endl;
-        buf[j][midpoint] = '|';
+        // Draw sides
+        buf[pos.y + 1][pos.x] = '|';
+        buf[pos.y + 1][pos.x + getBoxWidth()] = '|';
 
-        move_closer(j, end.y);
+        // Top and bottom
+        for (size_t i = pos.x + 1; i < pos.x + getBoxWidth(); ++i)
+        {
+            buf[pos.y][i] = '_';
+            buf[pos.y + 2][i] = '-';
+        }
+
+        // Now write the word
+        for (size_t i = 0; i < name.size(); ++i)
+        {
+            buf[pos.y + 1][pos.x + padding + i + 1] = name[i];
+        }
     }
-}
 
-void drawClass(const std::string& className, const Pos& pos, Buffer& buf)
-{
-    // Drawing the box first
+private:
+    size_t getBoxWidth() const { return name.size() + 2 * padding + 1; }
     const size_t padding = 1;
+};
 
-    // Draw sides
-    buf[pos.y + 1][pos.x] = '|';
-    buf[pos.y + 1][pos.x + className.size() + 2* padding + 1] = '|';
+// Pos drawArrow(const Pos& start, Relation rel, Buffer& buf)
+//{
+//    const size_t arrowLength = 15;
+//    // Parent classes go up, members go right
+//    const Pos end = [rel, &start]() -> Pos {
+//        if (rel == Relation::Inheritance)
+//        {
+//            assert(start.y > arrowLength);
+//            return {start.x, start.y - arrowLength};
+//        }
+//        else
+//        {
+//            return {start.x + arrowLength, start.y};
+//        }
+//    }();
 
-    // Top and bottom
-    for (size_t i = pos.x + 1; i < pos.x + className.size() + 2*padding + 1; ++i)
+//    drawLine(start, end, buf);
+//    drawArrowBegin(start, rel, buf);
+//    drawArrowEnd(end, rel, buf);
+//    return end;
+//}
+
+void drawDiagram(std::unique_ptr<ClassNode> head,
+                 const Pos& start,
+                 Buffer& buffer)
+{
+    head->pos = start;
+    std::queue<std::unique_ptr<ClassNode>> q;
+    q.push(std::move(head));
+    while (!q.empty())
     {
-        buf[pos.y][i] = '_';
-        buf[pos.y + 2][i] = '-';
-    }
-
-    // Now write the word
-    for (size_t i = 0; i < className.size(); ++i)
-    {        
-        buf[pos.y + 1][ pos.x + padding + i + 1] = className[i];
+        std::unique_ptr<ClassNode> cur_node = std::move(q.front());
+        q.pop();
+        cur_node->draw(buffer);
+        for (auto& child : cur_node->children)
+        {
+            // Next child position is given by the end of the arrow
+            child.node->pos = child.drawArrow(cur_node->pos, buffer);
+            q.push(std::move(child.node));
+        }
     }
 }
 
@@ -140,12 +149,15 @@ int main()
 
     Buffer buffer{};
 
-    const std::string className = "MyClass";
-    drawClass(className, {10, 10}, buffer);
+    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
+    head->children.emplace_back("MyParent", Relation::Inheritance);
 
-    //drawLine({3,3}, {10,15}, buffer);
-    //drawLine({10,15}, {3,3}, buffer);
-    drawLine({3,15}, {15,3}, buffer);
+    head->children.emplace_back("OtherClass", Relation::Composition);
+    drawDiagram(std::move(head), {10, 30}, buffer);
+
+    // drawLine({3,3}, {10,15}, buffer);
+    // drawLine({10,15}, {3,3}, buffer);
+    // drawLine({3,15}, {15,3}, buffer);
     render(buffer, out);
 
     return 0;
