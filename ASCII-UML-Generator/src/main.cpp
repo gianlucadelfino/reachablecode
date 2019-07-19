@@ -8,13 +8,6 @@
 
 #include "Drawing.H"
 
-//struct DiagramNode
-//{
-//    ClassNode classNode;
-//    Pos pos;
-//    std::vector<std::unique_ptr<DiagramNode>> diagramNode;
-//};
-
 struct ClassNode
 {
     ClassNode(const std::string& name_) : name(name_) {}
@@ -26,19 +19,27 @@ struct ClassNode
             : node(std::make_unique<ClassNode>(name_)), relation(relation_)
         {
         }
-        Pos drawArrow(const Pos& start, Buffer& buf)
+        Pos drawArrow(const ClassNode& originNode, Buffer& buf)
         {
-            const size_t arrowLength = 15;
-            // Parent classes go up, members go right
-            const Pos end = [this, &start]() -> Pos {
+            const Pos start = [this, &originNode]() {
                 if (relation == Relation::Inheritance)
                 {
-                    assert(start.y > arrowLength);
-                    return {start.x, start.y - arrowLength};
+                    return originNode.getTopAnchorPoint();
                 }
                 else
                 {
-                    return {start.x + arrowLength, start.y};
+                    return originNode.getRightAnchorPoint();
+                }
+            }();
+
+            const Pos end = [this]() -> Pos {
+                if (relation == Relation::Inheritance)
+                {
+                    return this->node->getBottomAnchorPoint();
+                }
+                else
+                {
+                    return this->node->getLeftAnchorPoint();
                 }
             }();
 
@@ -56,12 +57,19 @@ struct ClassNode
 
     Pos getRightAnchorPoint() const
     {
-        return {pos.x + getBoxWidth(), pos.y + 1};
+        return {pos.x + getBoxWidth() + 1, pos.y + 1};
+    }
+
+    Pos getLeftAnchorPoint() const { return {pos.x, pos.y + 1}; }
+
+    Pos getTopAnchorPoint() const
+    {
+        return {pos.x + getBoxWidth() / 2, pos.y - 1};
     }
 
     Pos getBottomAnchorPoint() const
     {
-        return {pos.x + getBoxWidth() / 2, pos.y + 2};
+        return {pos.x + getBoxWidth() / 2, pos.y + 3};
     }
 
     Pos getBottomRightCorner() const
@@ -91,32 +99,10 @@ struct ClassNode
         }
     }
 
-private:
     size_t getBoxWidth() const { return name.size() + 2 * padding + 1; }
+private:
     const size_t padding = 1;
 };
-
-// Pos drawArrow(const Pos& start, Relation rel, Buffer& buf)
-//{
-//    const size_t arrowLength = 15;
-//    // Parent classes go up, members go right
-//    const Pos end = [rel, &start]() -> Pos {
-//        if (rel == Relation::Inheritance)
-//        {
-//            assert(start.y > arrowLength);
-//            return {start.x, start.y - arrowLength};
-//        }
-//        else
-//        {
-//            return {start.x + arrowLength, start.y};
-//        }
-//    }();
-
-//    drawLine(start, end, buf);
-//    drawArrowBegin(start, rel, buf);
-//    drawArrowEnd(end, rel, buf);
-//    return end;
-//}
 
 void drawDiagram(std::unique_ptr<ClassNode> head,
                  const Pos& start,
@@ -133,7 +119,24 @@ void drawDiagram(std::unique_ptr<ClassNode> head,
         for (auto& child : cur_node->children)
         {
             // Next child position is given by the end of the arrow
-            child.node->pos = child.drawArrow(cur_node->pos, buffer);
+            child.node->pos = [&cur_node, &child]() -> Pos {
+                const size_t arrowLength = 10;
+                const Pos& start = cur_node->pos;
+
+                // Parent classes go up, members go right
+                if (child.relation == Relation::Inheritance)
+                {
+                    assert(start.y > arrowLength);
+                    return {start.x, start.y - arrowLength};
+                }
+                else
+                {
+                    return {start.x + cur_node->getBoxWidth() + arrowLength,
+                            start.y};
+                }
+            }();
+
+            child.drawArrow(*cur_node, buffer);
             q.push(std::move(child.node));
         }
     }

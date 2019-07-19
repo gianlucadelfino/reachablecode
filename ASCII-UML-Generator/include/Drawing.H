@@ -78,27 +78,33 @@ void drawLine(const Pos& start, const Pos& end, Buffer& buf)
     for (size_t i = end.x; i != midpoint; move_closer(i, midpoint))
     {
         // first half
-        std::cout << "i " << i << std::endl;
-        buf[end.y][i] = '-';
+            buf[end.y][i] = '-';
     }
 
-    // Draw the corners and the vertical line
-    if (end.y < start.y)
+    // Draw the corners and the vertical line if the line isn't just a vertical
+    if (start.x != end.x)
     {
-        // It goes up, so we start with a '
-        buf[start.y][midpoint] = '\'';
-        buf[end.y][midpoint] = ',';
+        if (end.y < start.y)
+        {
+            // It goes up, so we start with a '
+            buf[start.y][midpoint] = '\'';
+            buf[end.y][midpoint] = ',';
+        }
+        else if (end.y > start.y)
+        {
+            // It goes down, so we add a comma
+            buf[start.y][midpoint] = ',';
+            buf[end.y][midpoint] = '\'';
+        }
+        else
+        {
+            // They are on the same level, just put a - in the middle
+            buf[start.y][midpoint] = '-';
+        }
     }
-    else if (end.y > start.y)
-    {
-        // It goes down, so we add a comma
-        buf[start.y][midpoint] = ',';
-        buf[end.y][midpoint] = '\'';
-    }
-    else
-    {
-        // They are on the same level, just put a - in the middle
-        buf[start.y][midpoint] = '-';
+    else{
+        // Just add another | in the "midpoint"
+        buf[start.y][midpoint] = '|';
     }
 
     // Draw vertical line
@@ -138,8 +144,7 @@ void drawClass_old(const std::string& className, const Pos& pos, Buffer& buf)
     }
 }
 
-
-//void drawClass(const ClassNode& classNode, Buffer& buf)
+// void drawClass(const ClassNode& classNode, Buffer& buf)
 //{
 //    // Draw sides
 //    buf[classNode.pos.y + 1][classNode.pos.x] = '|';
