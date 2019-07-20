@@ -4,7 +4,7 @@
 #include <cassert>
 
 #include "Buffer.h"
-#include "ClassNode.H"
+#include "ClassNode.h"
 
 inline namespace drawing
 {
@@ -34,7 +34,7 @@ void render(const Buffer& buf, std::ostream& out)
     }
 }
 
-void move_closer(size_t& i, size_t destination)
+void move_closer(int& i, int destination)
 {
     if (i < destination)
         ++i;
@@ -44,7 +44,7 @@ void move_closer(size_t& i, size_t destination)
     // If equal do nothing
 }
 
-void drawLine(const Pos& start, const Pos& end, Buffer& buf)
+void drawHorizontalArrow(const Pos& start, const Pos& end, Buffer& buf)
 {
     // Draw a straigth line that breaks in the middle point
     //    --------------,
@@ -53,15 +53,15 @@ void drawLine(const Pos& start, const Pos& end, Buffer& buf)
     //                  '----------
 
     // Draw x
-    const size_t midpoint = (start.x + end.x) / 2;
-    for (size_t i = start.x; i != midpoint; move_closer(i, midpoint))
+    const int midpoint = (start.x + end.x) / 2;
+    for (int i = start.x; i != midpoint; move_closer(i, midpoint))
     {
         // first half
         buf[start.y][i] = '-';
     }
 
     // Second half
-    for (size_t i = end.x; i != midpoint; move_closer(i, midpoint))
+    for (int i = end.x; i != midpoint; move_closer(i, midpoint))
     {
         // first half
         buf[end.y][i] = '-';
@@ -95,7 +95,7 @@ void drawLine(const Pos& start, const Pos& end, Buffer& buf)
     }
 
     // Draw vertical line
-    size_t j = start.y;
+    int j = start.y;
     // Move one step already as we have ' or , already
     move_closer(j, end.y);
     while (j != end.y)
@@ -117,7 +117,6 @@ void drawArrowBegin(const Pos& pos, Relation r, Buffer& buffer)
         buffer[pos.y][pos.x] = '<';
 
         // Check it fits
-        assert(pos.x + 1 < buffer[0].size());
         buffer[pos.y][pos.x + 1] = '>';
         break;
 
@@ -153,7 +152,7 @@ void drawArrowEnd(const Pos& pos, Relation r, Buffer& buffer)
 
 void drawArrow(const Pos& start, const Pos& end, Relation relation, Buffer& buf)
 {
-    drawLine(start, end, buf);
+    drawHorizontalArrow(start, end, buf);
     drawArrowBegin(start, relation, buf);
     drawArrowEnd(end, relation, buf);
 }

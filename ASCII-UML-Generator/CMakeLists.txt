@@ -10,6 +10,7 @@ set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
 # ftrapv checks for overflow and crashes the program if it happens.
 set(GCC_DEBUG_FLAGS "-g -ftrapv")
 set(GCC_SANITIZE_FLAGS "-fsanitize=undefined,address")
+set(LSAN_OPTIONS "verbosity=1:log_threads=1")
 
 # This needs at least gcc9 for this
 SET(CMAKE_CXX_COMPILER /usr/bin/g++-9)
@@ -24,6 +25,10 @@ elseif(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]" OR CMAKE_BUILD_TYPE STREQ
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS} ${GCC_SANITIZE_FLAGS} ${GCC_DEBUG_FLAGS}")
 endif()
 
-add_executable(ASCII-UML-Generator src/main.cpp src/classNode.cpp)
-include_directories(include)
-#target_include_directories(ASCII-UML-Generator PUBLIC include)
+file(GLOB_RECURSE SRCS *.cpp)
+file(GLOB_RECURSE HDRS *.h)
+
+message(STATUS "Globbed files ${SRCS} ${HDRS}")
+
+add_executable(ASCII-UML-Generator ${SRCS} ${HDRS})
+target_include_directories(ASCII-UML-Generator PUBLIC include)

@@ -16,16 +16,18 @@ private:
 
         LineType::const_iterator cend() const { return _line.cend(); }
         LineType::iterator end() { return _line.end(); }
-        char& operator[](size_t i)
+        char& operator[](int i)
         {
-            assert(i < _line.size());
-            return _line[i];
+            assert(i >= 0);
+            assert(i < static_cast<int>(_line.size()));
+            return _line.at(i);
         }
 
-        char operator[](size_t i) const
+        char operator[](int i) const
         {
-            assert(i < _line.size());
-            return _line[i];
+            assert(i >= 0);
+            assert(i < static_cast<int>(_line.size()));
+            return _line.at(i);
         }
 
         size_t size() const { return _line.size(); }
@@ -37,15 +39,17 @@ private:
     BufferType _buffer{};
 
 public:
-    BufferLine& operator[](size_t i)
+    BufferLine& operator[](int i)
     {
-        assert(i < _buffer.size());
+        assert(i >= 0);
+        assert(i < static_cast<int>(_buffer.size()));
         return _buffer.at(i);
     }
 
-    const BufferLine& operator[](size_t i) const
+    const BufferLine& operator[](int i) const
     {
-        assert(i < _buffer.size());
+        assert(i >= 0);
+        assert(i < static_cast<int>(_buffer.size()));
         return _buffer.at(i);
     }
 
