@@ -1,5 +1,11 @@
 #pragma once
 
+#include <array>
+#include <cassert>
+
+#include "Buffer.h"
+#include "ClassNode.H"
+
 inline namespace drawing
 {
 
@@ -11,29 +17,9 @@ enum class Relation
     Unset
 };
 
-using Buffer = std::array<std::array<char, 80>, 40>;
-
-struct Pos
-{
-    size_t x{};
-    size_t y{};
-};
-
-// struct BufferArea
-//{
-//    const Pos& leftTopCorner{};
-//    const Pos& rightBottomCorner{};
-//};
-
-struct Box
-{
-    const size_t width{};
-    const size_t height{};
-};
-
 void render(const Buffer& buf, std::ostream& out)
 {
-    for (size_t i = 0; i < buf.size(); ++i)
+    for (size_t i = buf.size() - 1; i != 0; --i)
     {
         const auto& line = buf[i];
         out << i << "\t";
@@ -78,19 +64,19 @@ void drawLine(const Pos& start, const Pos& end, Buffer& buf)
     for (size_t i = end.x; i != midpoint; move_closer(i, midpoint))
     {
         // first half
-            buf[end.y][i] = '-';
+        buf[end.y][i] = '-';
     }
 
     // Draw the corners and the vertical line if the line isn't just a vertical
     if (start.x != end.x)
     {
-        if (end.y < start.y)
+        if (end.y > start.y)
         {
             // It goes up, so we start with a '
             buf[start.y][midpoint] = '\'';
             buf[end.y][midpoint] = ',';
         }
-        else if (end.y > start.y)
+        else if (end.y < start.y)
         {
             // It goes down, so we add a comma
             buf[start.y][midpoint] = ',';
@@ -102,7 +88,8 @@ void drawLine(const Pos& start, const Pos& end, Buffer& buf)
             buf[start.y][midpoint] = '-';
         }
     }
-    else{
+    else
+    {
         // Just add another | in the "midpoint"
         buf[start.y][midpoint] = '|';
     }
@@ -119,51 +106,6 @@ void drawLine(const Pos& start, const Pos& end, Buffer& buf)
         move_closer(j, end.y);
     }
 }
-
-void drawClass_old(const std::string& className, const Pos& pos, Buffer& buf)
-{
-    // Drawing the box first
-    const size_t padding = 1;
-
-    // Draw sides
-    buf[pos.y + 1][pos.x] = '|';
-    buf[pos.y + 1][pos.x + className.size() + 2 * padding + 1] = '|';
-
-    // Top and bottom
-    for (size_t i = pos.x + 1; i < pos.x + className.size() + 2 * padding + 1;
-         ++i)
-    {
-        buf[pos.y][i] = '_';
-        buf[pos.y + 2][i] = '-';
-    }
-
-    // Now write the word
-    for (size_t i = 0; i < className.size(); ++i)
-    {
-        buf[pos.y + 1][pos.x + padding + i + 1] = className[i];
-    }
-}
-
-// void drawClass(const ClassNode& classNode, Buffer& buf)
-//{
-//    // Draw sides
-//    buf[classNode.pos.y + 1][classNode.pos.x] = '|';
-//    buf[classNode.pos.y + 1][pos.x + classNode.getBoxWidth()] = '|';
-
-//    // Top and bottom
-//    for (size_t i = pos.x + 1; i < pos.x + className.size() + 2 * padding + 1;
-//         ++i)
-//    {
-//        buf[pos.y][i] = '_';
-//        buf[pos.y + 2][i] = '-';
-//    }
-
-//    // Now write the word
-//    for (size_t i = 0; i < className.size(); ++i)
-//    {
-//        buf[pos.y + 1][pos.x + padding + i + 1] = className[i];
-//    }
-//}
 
 void drawArrowBegin(const Pos& pos, Relation r, Buffer& buffer)
 {
@@ -207,6 +149,13 @@ void drawArrowEnd(const Pos& pos, Relation r, Buffer& buffer)
         assert(false);
         break;
     }
+}
+
+void drawArrow(const Pos& start, const Pos& end, Relation relation, Buffer& buf)
+{
+    drawLine(start, end, buf);
+    drawArrowBegin(start, relation, buf);
+    drawArrowEnd(end, relation, buf);
 }
 
 } // namespace drawing

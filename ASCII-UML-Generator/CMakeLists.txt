@@ -24,4 +24,6 @@ elseif(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]" OR CMAKE_BUILD_TYPE STREQ
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS} ${GCC_SANITIZE_FLAGS} ${GCC_DEBUG_FLAGS}")
 endif()
 
-add_executable(ASCII-UML-Generator src/main.cpp)
+add_executable(ASCII-UML-Generator src/main.cpp src/classNode.cpp)
+include_directories(include)
+#target_include_directories(ASCII-UML-Generator PUBLIC include)
