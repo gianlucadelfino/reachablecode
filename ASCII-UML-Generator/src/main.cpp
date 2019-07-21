@@ -41,7 +41,8 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
 
     for (auto& parent : node->parents)
     {
-        parent->pos = {cur_parent_x, node->getTopAnchorPoint().y + arrowLegth};
+        parent->setBottomAnchorPoint(
+            {cur_parent_x, node->getTopAnchorPoint().y + arrowLegth});
 
         drawArrow(node->getTopAnchorPoint(),
                   parent->getBottomAnchorPoint(),
@@ -74,11 +75,14 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
         }
     }();
 
+    const int members_x =
+        std::max(maxXY.x, node->getRightAnchorPoint().x) + arrowLegth;
+
     int cur_member_y = lowestMemberY;
     for (auto& member : node->ownedMembers)
     {
-        member->pos = {node->getRightAnchorPoint().x + arrowLegth,
-                       cur_member_y + member->getBoxHeight()};
+        member->setLeftAnchorPoint(
+            {members_x, cur_member_y + member->getBoxHeight()});
 
         drawArrow(node->getRightAnchorPoint(),
                   member->getLeftAnchorPoint(),
@@ -90,6 +94,8 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
 
         cur_member_y = memberMaxXY.y;
     }
+
+    // TODO: add print aggregates
 
     return maxXY;
 }
@@ -109,14 +115,14 @@ int main()
     head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
 
     head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
+    head->ownedMembers.front()->parents.push_back(
+        std::make_unique<ClassNode>("Parent2"));
+
     head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
 
     head->pos = {10, 10};
     drawDiagram(head.get(), buffer);
 
-    // drawLine({3,3}, {10,15}, buffer);
-    // drawLine({10,15}, {3,3}, buffer);
-    // drawLine({3,15}, {15,3}, buffer);
     render(buffer, out);
 
     return 0;

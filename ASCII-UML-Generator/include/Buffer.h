@@ -1,12 +1,17 @@
 #pragma once
 
+#include <array>
+#include <cassert>
+
+#include "Pos.h"
+
 class Buffer
 {
 private:
     class BufferLine
     {
     public:
-        using LineType = std::array<char, 80>;
+        using LineType = std::array<char, 100>;
 
         LineType::const_iterator cbegin() const { return _line.cbegin(); }
         LineType::iterator begin() { return _line.begin(); }
@@ -52,6 +57,9 @@ public:
         assert(i < static_cast<int>(_buffer.size()));
         return _buffer.at(i);
     }
+
+    char& at(const Pos& pos) { return this->operator[](pos.y)[pos.x]; }
+    char at(const Pos& pos) const { return this->operator[](pos.y)[pos.x]; }
 
     BufferType::const_iterator cbegin() const { return _buffer.cbegin(); }
     BufferType::iterator begin() { return _buffer.begin(); }

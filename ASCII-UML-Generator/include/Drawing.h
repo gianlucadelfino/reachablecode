@@ -46,6 +46,11 @@ void move_closer(int& i, int destination)
 
 void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buf)
 {
+    if (start.x > end.x)
+    {
+        drawHorizontalLine(end, start, buf);
+        return;
+    }
     // Draw a straigth line that breaks in the middle point
     //    --------------,
     //                  |
@@ -54,13 +59,13 @@ void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buf)
 
     // Draw the first half of the horizontal line
     const int midpoint = (start.x + end.x) / 2;
-    for (int i = start.x; i != midpoint; move_closer(i, midpoint))
+    for (int i = start.x; i != midpoint; ++i)
     {
         buf[start.y][i] = '-';
     }
 
     // Second half
-    for (int i = end.x; i != midpoint; move_closer(i, midpoint))
+    for (int i = midpoint; i != end.x; ++i)
     {
         buf[end.y][i] = '-';
     }
@@ -79,11 +84,6 @@ void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buf)
         buf[start.y][midpoint] = ',';
         buf[end.y][midpoint] = '\'';
     }
-    else
-    {
-        // They are on the same level, just put a - in the middle
-        buf[start.y][midpoint] = '-';
-    }
 
     // Draw vertical line
     int j = start.y;
@@ -100,6 +100,11 @@ void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buf)
 
 void drawVerticalLine(const Pos& start, const Pos& end, Buffer& buf)
 {
+    if (start.y > end.y)
+    {
+        drawVerticalLine(end, start, buf);
+        return;
+    }
     // Draw a straigth line that breaks in the middle point
     //    |
     //    |
@@ -109,35 +114,23 @@ void drawVerticalLine(const Pos& start, const Pos& end, Buffer& buf)
 
     // Draw first half of the vertical
     const int midpoint = (start.y + end.y) / 2;
-    for (int i = start.y; i != midpoint; move_closer(i, midpoint))
+    for (int i = start.y; i != midpoint; ++i)
     {
         buf[i][start.x] = '|';
     }
 
     // Second half
-    for (int i = end.y; i != midpoint; move_closer(i, midpoint))
+    for (int i = midpoint; i != end.y; ++i)
     {
         buf[i][end.x] = '|';
     }
 
     // Draw the corners and the vertical line if the line isn't just a
     // vertical
-    if (start.y > end.y)
+    if (start.x != end.x)
     {
-        // It goes up, so we start with a '
-        buf[midpoint][start.x] = '\'';
-        buf[midpoint][end.x] = ',';
-    }
-    else if (start.y < end.y)
-    {
-        // It goes down, so we add a comma
         buf[midpoint][start.x] = ',';
         buf[midpoint][end.x] = '\'';
-    }
-    else
-    {
-        // They are on the same level, just put a - in the middle
-        buf[midpoint][start.x] = '-';
     }
 
     // Draw horizontal line
@@ -150,7 +143,7 @@ void drawVerticalLine(const Pos& start, const Pos& end, Buffer& buf)
 
         move_closer(j, end.x);
     }
-} // namespace drawing
+}
 
 void drawArrowBegin(const Pos& pos, Relation r, Buffer& buffer)
 {

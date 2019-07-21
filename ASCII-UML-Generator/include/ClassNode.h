@@ -6,12 +6,6 @@
 
 #include "Buffer.h"
 
-struct Pos
-{
-    int x{};
-    int y{};
-};
-
 struct ClassNode
 {
     ClassNode(const std::string& name_) : name(name_) {}
@@ -41,6 +35,24 @@ struct ClassNode
         return {pos.x + getBoxWidth(), pos.y - 2};
     }
 
+    void setBottomAnchorPoint(const Pos& pos_)
+    {
+        pos.x = pos_.x + getBoxWidth()/2;
+        pos.y = pos_.y + getBoxHeight();
+    }
+
+    void setLeftAnchorPoint(const Pos& pos_)
+    {
+        pos.x = pos_.x;
+        pos.y = pos_.y + getBoxHeight()/2;
+    }
+
+    Pos getBottomLeftCorner() const { return {pos.x, pos.y - 2}; }
+
+    Pos getTopLeftCorner() const { return pos; }
+
+    Pos getTopRightCorner() const { return {pos.x + getBoxWidth(), pos.y}; }
+
     std::vector<std::unique_ptr<ClassNode>> ownedMembers;
     std::vector<std::unique_ptr<ClassNode>> aggregates;
     std::vector<std::unique_ptr<ClassNode>> parents;
@@ -54,9 +66,15 @@ struct ClassNode
         // Top and bottom
         for (int i = pos.x + 1; i < pos.x + getBoxWidth(); ++i)
         {
-            buf[pos.y][i] = '_';
+            buf[pos.y][i] = '-';
             buf[pos.y - 2][i] = '-';
         }
+
+        // Draw corners
+        buf.at(getBottomLeftCorner()) = '+';
+        buf.at(getBottomRightCorner()) = '+';
+        buf.at(getTopLeftCorner()) = '+';
+        buf.at(getTopRightCorner()) = '+';
 
         // Now write the word
         for (int i = 0; i < static_cast<int>(name.size()); ++i)
