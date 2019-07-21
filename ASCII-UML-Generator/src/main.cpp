@@ -65,11 +65,12 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
         }
         else
         {
-            // Let's assume each member will need 20 characters total vertical
+            // Let's assume each member will need 10 characters total vertical
             // space
-            const int approxVerticalSpacePerMember = 20;
-            return node->pos.y -
-                   approxVerticalSpacePerMember * (numOfMembers) / 2;
+            const int approxVerticalSpacePerMember = 10;
+            return std::max(node->getBoxHeight(),
+                            node->pos.y - approxVerticalSpacePerMember *
+                                              (numOfMembers) / 2);
         }
     }();
 
@@ -77,7 +78,7 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
     for (auto& member : node->ownedMembers)
     {
         member->pos = {node->getRightAnchorPoint().x + arrowLegth,
-                       cur_member_y};
+                       cur_member_y + member->getBoxHeight()};
 
         drawArrow(node->getRightAnchorPoint(),
                   member->getLeftAnchorPoint(),
@@ -108,6 +109,7 @@ int main()
     head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
 
     head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
+    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
 
     head->pos = {10, 10};
     drawDiagram(head.get(), buffer);

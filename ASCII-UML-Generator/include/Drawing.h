@@ -44,7 +44,7 @@ void move_closer(int& i, int destination)
     // If equal do nothing
 }
 
-void drawHorizontalArrow(const Pos& start, const Pos& end, Buffer& buf)
+void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buf)
 {
     // Draw a straigth line that breaks in the middle point
     //    --------------,
@@ -52,46 +52,37 @@ void drawHorizontalArrow(const Pos& start, const Pos& end, Buffer& buf)
     //                  |
     //                  '----------
 
-    // Draw x
+    // Draw the first half of the horizontal line
     const int midpoint = (start.x + end.x) / 2;
     for (int i = start.x; i != midpoint; move_closer(i, midpoint))
     {
-        // first half
         buf[start.y][i] = '-';
     }
 
     // Second half
     for (int i = end.x; i != midpoint; move_closer(i, midpoint))
     {
-        // first half
         buf[end.y][i] = '-';
     }
 
-    // Draw the corners and the vertical line if the line isn't just a vertical
-    if (start.x != end.x)
+    // Draw the corners and the horizontal line if the line isn't just a
+    // horizontal
+    if (start.y < end.y)
     {
-        if (end.y > start.y)
-        {
-            // It goes up, so we start with a '
-            buf[start.y][midpoint] = '\'';
-            buf[end.y][midpoint] = ',';
-        }
-        else if (end.y < start.y)
-        {
-            // It goes down, so we add a comma
-            buf[start.y][midpoint] = ',';
-            buf[end.y][midpoint] = '\'';
-        }
-        else
-        {
-            // They are on the same level, just put a - in the middle
-            buf[start.y][midpoint] = '-';
-        }
+        // It goes up, so we start with a '
+        buf[start.y][midpoint] = '\'';
+        buf[end.y][midpoint] = ',';
+    }
+    else if (start.y > end.y)
+    {
+        // It goes down, so we add a comma
+        buf[start.y][midpoint] = ',';
+        buf[end.y][midpoint] = '\'';
     }
     else
     {
-        // Just add another | in the "midpoint"
-        buf[start.y][midpoint] = '|';
+        // They are on the same level, just put a - in the middle
+        buf[start.y][midpoint] = '-';
     }
 
     // Draw vertical line
@@ -106,6 +97,60 @@ void drawHorizontalArrow(const Pos& start, const Pos& end, Buffer& buf)
         move_closer(j, end.y);
     }
 }
+
+void drawVerticalLine(const Pos& start, const Pos& end, Buffer& buf)
+{
+    // Draw a straigth line that breaks in the middle point
+    //    |
+    //    |
+    //    '---------------,
+    //                    |
+    //                    |
+
+    // Draw first half of the vertical
+    const int midpoint = (start.y + end.y) / 2;
+    for (int i = start.y; i != midpoint; move_closer(i, midpoint))
+    {
+        buf[i][start.x] = '|';
+    }
+
+    // Second half
+    for (int i = end.y; i != midpoint; move_closer(i, midpoint))
+    {
+        buf[i][end.x] = '|';
+    }
+
+    // Draw the corners and the vertical line if the line isn't just a
+    // vertical
+    if (start.y > end.y)
+    {
+        // It goes up, so we start with a '
+        buf[midpoint][start.x] = '\'';
+        buf[midpoint][end.x] = ',';
+    }
+    else if (start.y < end.y)
+    {
+        // It goes down, so we add a comma
+        buf[midpoint][start.x] = ',';
+        buf[midpoint][end.x] = '\'';
+    }
+    else
+    {
+        // They are on the same level, just put a - in the middle
+        buf[midpoint][start.x] = '-';
+    }
+
+    // Draw horizontal line
+    int j = start.x;
+    // Move one step already as we have ' or , already
+    move_closer(j, end.x);
+    while (j != end.x)
+    {
+        buf[midpoint][j] = '-';
+
+        move_closer(j, end.x);
+    }
+} // namespace drawing
 
 void drawArrowBegin(const Pos& pos, Relation r, Buffer& buffer)
 {
@@ -152,7 +197,15 @@ void drawArrowEnd(const Pos& pos, Relation r, Buffer& buffer)
 
 void drawArrow(const Pos& start, const Pos& end, Relation relation, Buffer& buf)
 {
-    drawHorizontalArrow(start, end, buf);
+    assert(relation != Relation::Unset);
+    if (relation == Relation::Inheritance)
+    {
+        drawVerticalLine(start, end, buf);
+    }
+    else
+    {
+        drawHorizontalLine(start, end, buf);
+    }
     drawArrowBegin(start, relation, buf);
     drawArrowEnd(end, relation, buf);
 }

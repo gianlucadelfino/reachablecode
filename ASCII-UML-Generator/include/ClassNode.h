@@ -67,6 +67,8 @@ struct ClassNode
 
     int getBoxWidth() const { return name.size() + 2 * padding + 1; }
 
+    int getBoxHeight() const { return 3; }
+
 private:
     const int padding = 1;
 };
