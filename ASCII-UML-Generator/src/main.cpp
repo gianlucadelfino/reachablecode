@@ -15,7 +15,7 @@
 Pos drawDiagram(ClassNode* node, Buffer& buffer)
 {
     const int arrowLegth = 10;
-    Pos maxXY{node->getRightAnchorPoint().x, node->getTopAnchorPoint().y};
+    Pos maxXY(node->getTopRightCorner());
 
     node->draw(buffer);
 
@@ -23,78 +23,87 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
     // bottom right, then depth first into it keeping track of the highest
     // position reached
 
-    const int leftMostParentX = [node] {
-        const int numParents = node->parents.size();
-        if (numParents <= 1)
-        {
-            return node->pos.x;
-        }
-        else
-        {
-            // Let's assume about 20 char for each parents,
-            return std::max(
-                0, node->getTopAnchorPoint().x - 20 * (numParents - 1));
-        }
-    }();
-
-    int cur_parent_x = leftMostParentX;
-
-    for (auto& parent : node->parents)
+    if (!node->parents.empty())
     {
-        parent->setBottomAnchorPoint(
-            {cur_parent_x, node->getTopAnchorPoint().y + arrowLegth});
+        const int leftMostParentX = [node] {
+            const int numParents = node->parents.size();
+            if (numParents <= 1)
+            {
+                return node->pos.x;
+            }
+            else
+            {
+                // Let's assume about 20 char for each parents,
+                return std::max(
+                    0, node->getTopAnchorPoint().x - 20 * (numParents - 1));
+            }
+        }();
 
-        drawArrow(node->getTopAnchorPoint(),
-                  parent->getBottomAnchorPoint(),
-                  Relation::Inheritance,
-                  buffer);
-        const Pos parentMaxXY = drawDiagram(parent.get(), buffer);
-        maxXY.x = std::max(parentMaxXY.x + parent->getBoxWidth() + 1, maxXY.y);
-        maxXY.y = std::max(parentMaxXY.y, maxXY.y);
+        int cur_parent_x = leftMostParentX;
 
-        cur_parent_x = parentMaxXY.x;
+        for (auto& parent : node->parents)
+        {
+            const int x_padding = 1; // Because why not make it look prettier
+            cur_parent_x += x_padding;
+            parent->pos =
+                Pos(cur_parent_x, node->getTopAnchorPoint().y + arrowLegth);
+
+            drawArrow(node->getTopAnchorPoint(),
+                      parent->getBottomAnchorPoint(),
+                      Relation::Inheritance,
+                      buffer);
+            const Pos parentMaxXY = drawDiagram(parent.get(), buffer);
+            maxXY.x = std::max(parentMaxXY.x, maxXY.x);
+            maxXY.y = std::max(parentMaxXY.y, maxXY.y);
+
+            cur_parent_x = parentMaxXY.x;
+        }
     }
 
-    // Let's estimate the amount of space we need to leave given the total
-    // number of members
-    const int lowestMemberY = [node] {
-        const int numOfMembers =
-            node->aggregates.size() + node->ownedMembers.size();
-        if (numOfMembers <= 1)
-        {
-            return node->pos.y;
-        }
-        else
-        {
-            // Let's assume each member will need 10 characters total vertical
-            // space
-            const int approxVerticalSpacePerMember = 10;
-            return std::max(node->getBoxHeight(),
-                            node->pos.y - approxVerticalSpacePerMember *
-                                              (numOfMembers) / 2);
-        }
-    }();
-
-    const int members_x =
-        std::max(maxXY.x, node->getRightAnchorPoint().x) + arrowLegth;
-
-    int cur_member_y = lowestMemberY;
-    for (auto& member : node->ownedMembers)
+    if (!node->ownedMembers.empty())
     {
-        member->setLeftAnchorPoint(
-            {members_x, cur_member_y + member->getBoxHeight()});
+        // Let's estimate the amount of space we need to leave given the total
+        // number of members
+        const int lowestMemberY = [node] {
+            const int numOfMembers =
+                node->aggregates.size() + node->ownedMembers.size();
+            if (numOfMembers <= 1)
+            {
+                return node->pos.y;
+            }
+            else
+            {
+                // Let's assume each member will need 10 characters total
+                // vertical space
+                const int approxVerticalSpacePerMember = 10;
+                return std::max(node->getBoxHeight(),
+                                node->pos.y - approxVerticalSpacePerMember *
+                                                  (numOfMembers) / 2);
+            }
+        }();
 
-        drawArrow(node->getRightAnchorPoint(),
-                  member->getLeftAnchorPoint(),
-                  Relation::Composition,
-                  buffer);
-        const Pos memberMaxXY = drawDiagram(member.get(), buffer);
-        maxXY.x = std::max(memberMaxXY.x + member->getBoxWidth() + 1, maxXY.x);
-        maxXY.y = std::max(memberMaxXY.y, maxXY.y);
+        const int parent_member_padding_x = 5; // Enough to make the line curve
+        const int cur_member_x =
+            std::max(maxXY.x, arrowLegth) + parent_member_padding_x;
 
-        cur_member_y = memberMaxXY.y;
+        int cur_member_y = lowestMemberY;
+        for (auto& member : node->ownedMembers)
+        {
+
+            member->setLeftAnchorPoint(
+                {cur_member_x, cur_member_y + member->getBoxHeight()});
+
+            drawArrow(node->getRightAnchorPoint(),
+                      member->getLeftAnchorPoint(),
+                      Relation::Composition,
+                      buffer);
+            const Pos memberMaxXY = drawDiagram(member.get(), buffer);
+            maxXY.x = std::max(memberMaxXY.x, maxXY.x);
+            maxXY.y = std::max(memberMaxXY.y, maxXY.y);
+
+            cur_member_y = memberMaxXY.y;
+        }
     }
-
     // TODO: add print aggregates
 
     return maxXY;
@@ -110,18 +119,19 @@ int main()
 
     Buffer buffer{};
 
-    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
-    head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
-    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
+    drawArrow({3, 3}, {13,13}, Relation::Composition, buffer);
+//    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
+//    head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
+//    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
 
-    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
-    head->ownedMembers.front()->parents.push_back(
-        std::make_unique<ClassNode>("Parent2"));
+//    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
+//    head->ownedMembers.front()->parents.push_back(
+//        std::make_unique<ClassNode>("Parent2"));
 
-    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
+//    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
 
-    head->pos = {10, 10};
-    drawDiagram(head.get(), buffer);
+//    head->pos = {10, 10};
+//    drawDiagram(head.get(), buffer);
 
     render(buffer, out);
 

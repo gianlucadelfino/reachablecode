@@ -57,7 +57,7 @@ const std::vector<Pos> directions{{0, 1}, {0, -1}, {-1, 0}, {1, 0}};
 
 int computeDistance(const std::vector<Direction>& path)
 {
-//    static std::unordered_map<> memoized;
+//    static std::unordered_map<> memoized; 
     int size{};
     for (auto iter = std::next(path.cbegin()); iter != path.cend(); ++iter)
     {

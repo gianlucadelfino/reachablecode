@@ -37,7 +37,7 @@ struct ClassNode
 
     void setBottomAnchorPoint(const Pos& pos_)
     {
-        pos.x = pos_.x + getBoxWidth()/2;
+        pos.x = pos_.x - getBoxWidth()/2;
         pos.y = pos_.y + getBoxHeight();
     }
 

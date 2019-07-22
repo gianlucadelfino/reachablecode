@@ -61,6 +61,13 @@ public:
     char& at(const Pos& pos) { return this->operator[](pos.y)[pos.x]; }
     char at(const Pos& pos) const { return this->operator[](pos.y)[pos.x]; }
 
+    bool isPosValid(const Pos& pos) const
+    {
+        return pos.x >= 0;
+        static_cast<size_t>(pos.x) < _buffer.size() && pos.y >= 0 &&
+            static_cast<size_t>(pos.y) <= _buffer.at(0).size();
+    }
+
     BufferType::const_iterator cbegin() const { return _buffer.cbegin(); }
     BufferType::iterator begin() { return _buffer.begin(); }
 
