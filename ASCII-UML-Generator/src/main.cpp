@@ -119,7 +119,7 @@ int main()
 
     Buffer buffer{};
 
-    drawArrow({3, 3}, {13,13}, Relation::Composition, buffer);
+    drawArrow({20, 3}, {3, 20}, Relation::Composition, buffer);
 //    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
 //    head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
 //    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));

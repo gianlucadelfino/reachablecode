@@ -19,6 +19,10 @@ struct Pos
 
     bool operator!=(const Pos& rhs) const { return !operator==(rhs); }
 
+    enum class Coord {X=0, Y=1};
+    int operator[](Coord c) const { return static_cast<size_t>(c) & 1 ? y : x; }
+    int operator[](size_t i) const { return i & 1 ? x : y; }
+
     friend Pos operator+(const Pos& lhs, const Pos& rhs)
     {
         Pos res = lhs;

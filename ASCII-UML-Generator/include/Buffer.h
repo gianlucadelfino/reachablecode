@@ -63,9 +63,9 @@ public:
 
     bool isPosValid(const Pos& pos) const
     {
-        return pos.x >= 0;
-        static_cast<size_t>(pos.x) < _buffer.size() && pos.y >= 0 &&
-            static_cast<size_t>(pos.y) <= _buffer.at(0).size();
+        return pos.x >= 0 &&
+               static_cast<size_t>(pos.x) < _buffer.at(0).size() &&
+               pos.y >= 0 && static_cast<size_t>(pos.y) < _buffer.size();
     }
 
     BufferType::const_iterator cbegin() const { return _buffer.cbegin(); }
@@ -76,6 +76,16 @@ public:
 
     BufferType::const_iterator cend() const { return _buffer.cend(); }
     BufferType::iterator end() { return _buffer.end(); }
+
+    BufferType::const_reverse_iterator crbegin() const { return _buffer.crbegin(); }
+    BufferType::reverse_iterator rbegin() { return _buffer.rbegin(); }
+
+    BufferType::const_reverse_iterator rbegin() const { return _buffer.rbegin(); }
+    BufferType::const_reverse_iterator rend() const { return _buffer.rend(); }
+
+    BufferType::const_reverse_iterator crend() const { return _buffer.crend(); }
+    BufferType::reverse_iterator rend() { return _buffer.rend(); }
+
 
     size_t size() const { return _buffer.size(); }
 };
