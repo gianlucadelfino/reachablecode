@@ -43,7 +43,7 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
 
         for (auto& parent : node->parents)
         {
-            const int x_padding = 1; // Because why not make it look prettier
+            const int x_padding = 2; // Because why not make it look prettier
             cur_parent_x += x_padding;
             parent->pos =
                 Pos(cur_parent_x, node->getTopAnchorPoint().y + arrowLegth);
@@ -119,19 +119,19 @@ int main()
 
     Buffer buffer{};
 
-    drawArrow({20, 3}, {3, 20}, Relation::Composition, buffer);
-//    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
-//    head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
-//    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
+//    drawArrow({20, 7}, {20, 17}, Relation::Inheritance, buffer);
+    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
+    head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
+    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
 
-//    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
-//    head->ownedMembers.front()->parents.push_back(
-//        std::make_unique<ClassNode>("Parent2"));
+    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
+    head->ownedMembers.front()->parents.push_back(
+        std::make_unique<ClassNode>("Parent2"));
 
-//    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
+    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
 
-//    head->pos = {10, 10};
-//    drawDiagram(head.get(), buffer);
+    head->pos = {10, 10};
+    drawDiagram(head.get(), buffer);
 
     render(buffer, out);
 
