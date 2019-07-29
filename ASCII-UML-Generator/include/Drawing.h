@@ -39,32 +39,46 @@ enum class Relation
     Unset
 };
 
-void render(const Buffer& buf, std::ostream& out)
+class CoordMover
 {
-    for (size_t i = buf.size() - 1; i != 0; --i)
+public:
+    CoordMover(int initial_pos, int destination)
+        : _coord(initial_pos), _destination(destination), _end(false)
     {
-        const auto& line = buf[i];
-        out << i << "\t";
-        for (auto c : line)
-        {
-            if (c)
-                out << c;
-            else
-                out << '.';
-        }
-        out << "\n";
     }
-}
 
-void move_closer(int& i, int destination)
-{
-    if (i < destination)
-        ++i;
-    else if (i > destination)
-        --i;
+    void move_closer()
+    {
+        if (_coord < _destination)
+            ++_coord;
+        else if (_coord > _destination)
+            --_coord;
+    }
 
-    // If equal do nothing
-}
+    operator int() const { return _coord; }
+
+    bool done()
+    {
+        if (_end)
+        {
+            return true;
+        }
+
+        if (_coord == _destination)
+        {
+            _end = true;
+        }
+
+        return false;
+    }
+
+    int value() const { return _coord; }
+
+private:
+    int _coord;
+    const int _destination;
+    bool _end;
+};
 
 enum Direction
 {
@@ -90,12 +104,12 @@ int computeDistance(const Pos& start,
     // Make lines follow the preferred direction, unless they are in the middle
     // area, where we want the line to break
     // middle region
-    const int third_dist = std::abs(end[prefCoord] - start[prefCoord]) / 3;
+    const int middle_range = std::abs(end[prefCoord] - start[prefCoord]) / 5;
     const int middle_point = (end[prefCoord] + start[prefCoord]) / 2;
 
     const bool in_middle_range =
-        cur_pos[prefCoord] < (middle_point + third_dist) and
-        cur_pos[prefCoord] > (middle_point - third_dist);
+        cur_pos[prefCoord] < (middle_point + middle_range) and
+        cur_pos[prefCoord] >= (middle_point);
 
     // Hard to follow logic below
     const bool vertical = static_cast<size_t>(prefCoord) & 1;
@@ -194,7 +208,7 @@ std::vector<Pos> findPath(const Pos& start,
 
             // If you find an empty cell, then consider the branch
             if (buffer.isPosValid(new_pos) &&
-                (!buffer.at(new_pos) or buffer.at(new_pos) == '@'))
+                buffer.at(new_pos).type() != Buffer::ElemType::Box)
             {
                 GraphNode& adjacient_node = graph.find(new_pos)->second;
 
@@ -238,13 +252,40 @@ std::vector<Pos> findPath(const Pos& start,
         }
     }
 
+    // Debug
+    //    for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
+    //    {
+    //        std::cout << y << "\t";
+    //        for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
+    //        {
+    //            const Pos pos(x, y);
+    //            const auto& node = graph.at(pos);
+
+    //            const int dist = node.cur_minimum_distance;
+    //            if (dist < 10)
+    //            {
+    //                std::cout << '0' << dist;
+    //            }
+    //            else if (dist < 100)
+    //            {
+    //                std::cout << dist;
+    //            }
+    //            std::cout << '.';
+    //        }
+    //        std::cout << "\n";
+    //    }
+    //    std::cout << "\n";
+
     return path;
 }
 
-void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buffer)
+void drawLine(const Pos& start,
+              const Pos& end,
+              Pos::Coord preferredDirection,
+              Buffer& buffer)
 {
     const std::vector<Pos> reverse_path =
-        findPath(start, end, Pos::Coord::X, buffer);
+        findPath(start, end, preferredDirection, buffer);
 
     assert(reverse_path.size() > 1);
     Pos last_direction =
@@ -257,53 +298,7 @@ void drawHorizontalLine(const Pos& start, const Pos& end, Buffer& buffer)
         const Pos direction = *std::next(iter) - new_pos;
         const bool directionChanging = direction != last_direction;
 
-        if (direction == directions[UP])
-        {
-            if (directionChanging)
-                buffer.at(new_pos) = '\'';
-            else
-                buffer.at(new_pos) = '|';
-        }
-        else if (direction == directions[DOWN])
-        {
-            if (directionChanging)
-                buffer.at(new_pos) = ',';
-            else
-                buffer.at(new_pos) = '|';
-        }
-        else if (direction == directions[LEFT] or
-                 direction == directions[RIGHT])
-        {
-            if (directionChanging)
-            {
-                if (last_direction == directions[UP])
-                    buffer.at(new_pos) = ',';
-                else if (last_direction == directions[DOWN])
-                    buffer.at(new_pos) = '\'';
-            }
-            else
-                buffer.at(new_pos) = '-';
-        }
-
-        last_direction = direction;
-    }
-}
-
-void drawVerticalLine(const Pos& start, const Pos& end, Buffer& buffer)
-{
-    const std::vector<Pos> reverse_path =
-        findPath(start, end, Pos::Coord::Y, buffer);
-
-    assert(reverse_path.size() > 1);
-    Pos last_direction =
-        *std::next(reverse_path.crbegin()) - *reverse_path.crbegin();
-    for (auto iter = reverse_path.crbegin();
-         iter != std::prev(reverse_path.crend());
-         ++iter)
-    {
-        const Pos new_pos = *iter;
-        const Pos direction = *std::next(iter) - new_pos;
-        const bool directionChanging = direction != last_direction;
+        buffer.at(new_pos).type(Buffer::ElemType::Arrow);
 
         if (direction == directions[UP])
         {
@@ -385,11 +380,11 @@ void drawArrow(const Pos& start, const Pos& end, Relation relation, Buffer& buf)
     assert(relation != Relation::Unset);
     if (relation == Relation::Inheritance)
     {
-        drawVerticalLine(start, end, buf);
+        drawLine(start, end, Pos::Coord::Y, buf);
     }
     else
     {
-        drawHorizontalLine(start, end, buf);
+        drawLine(start, end, Pos::Coord::X, buf);
     }
     drawArrowBegin(start, relation, buf);
     drawArrowEnd(end, relation, buf);

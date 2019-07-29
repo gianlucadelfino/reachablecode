@@ -14,7 +14,6 @@
 // parent or member diagram. These are used to draw the next element.
 Pos drawDiagram(ClassNode* node, Buffer& buffer)
 {
-    const int arrowLegth = 10;
     Pos maxXY(node->getTopRightCorner());
 
     node->draw(buffer);
@@ -43,10 +42,11 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
 
         for (auto& parent : node->parents)
         {
+            const int arrow_length_y = 10;
             const int x_padding = 2; // Because why not make it look prettier
             cur_parent_x += x_padding;
             parent->pos =
-                Pos(cur_parent_x, node->getTopAnchorPoint().y + arrowLegth);
+                Pos(cur_parent_x, node->getTopAnchorPoint().y + arrow_length_y);
 
             drawArrow(node->getTopAnchorPoint(),
                       parent->getBottomAnchorPoint(),
@@ -82,14 +82,14 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
             }
         }();
 
+        const int arrow_length_x = 45;
         const int parent_member_padding_x = 5; // Enough to make the line curve
         const int cur_member_x =
-            std::max(maxXY.x, arrowLegth) + parent_member_padding_x;
+            std::max(maxXY.x, arrow_length_x) + parent_member_padding_x;
 
         int cur_member_y = lowestMemberY;
         for (auto& member : node->ownedMembers)
         {
-
             member->setLeftAnchorPoint(
                 {cur_member_x, cur_member_y + member->getBoxHeight()});
 
@@ -119,7 +119,7 @@ int main()
 
     Buffer buffer{};
 
-//    drawArrow({20, 7}, {20, 17}, Relation::Inheritance, buffer);
+    //    drawArrow({20, 7}, {20, 17}, Relation::Inheritance, buffer);
     std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
     head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
     head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
