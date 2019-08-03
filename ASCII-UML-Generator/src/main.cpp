@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <queue>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -14,8 +15,11 @@
 // parent or member diagram. These are used to draw the next element.
 Pos drawDiagram(ClassNode* node, Buffer& buffer)
 {
-    Pos maxXY(node->getTopRightCorner());
+    // We need something to check for cycles and not draw classes twice. So
+    // we store the drawned nodes to check if we already drawed them.
+    static std::map<std::string, ClassNode*> drawedNodes;
 
+    Pos maxXY(node->getTopRightCorner());
     node->draw(buffer);
 
     // Members go on the right hand side. We start drawing the first one at the
@@ -42,21 +46,30 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
 
         for (auto& parent : node->parents)
         {
-            const int arrow_length_y = 10;
-            const int x_padding = 2; // Because why not make it look prettier
-            cur_parent_x += x_padding;
-            parent->pos =
-                Pos(cur_parent_x, node->getTopAnchorPoint().y + arrow_length_y);
+            // If it's already there no need to recurse
+            if (drawedNodes.find(parent->name) == drawedNodes.cend())
+            {
+                const int arrow_length_y = 10;
+                // Because why not make it look prettier
+                const int x_padding = 2;
+                cur_parent_x += x_padding;
+
+                parent->pos = Pos(cur_parent_x,
+                                  node->getTopAnchorPoint().y + arrow_length_y);
+
+                // Before recursing we need to check if we already drawed it
+                const Pos parentMaxXY = drawDiagram(parent.get(), buffer);
+
+                maxXY.x = std::max(parentMaxXY.x, maxXY.x);
+                maxXY.y = std::max(parentMaxXY.y, maxXY.y);
+
+                cur_parent_x = parentMaxXY.x;
+            }
 
             drawArrow(node->getTopAnchorPoint(),
                       parent->getBottomAnchorPoint(),
                       Relation::Inheritance,
                       buffer);
-            const Pos parentMaxXY = drawDiagram(parent.get(), buffer);
-            maxXY.x = std::max(parentMaxXY.x, maxXY.x);
-            maxXY.y = std::max(parentMaxXY.y, maxXY.y);
-
-            cur_parent_x = parentMaxXY.x;
         }
     }
 
@@ -82,29 +95,38 @@ Pos drawDiagram(ClassNode* node, Buffer& buffer)
             }
         }();
 
-        const int arrow_length_x = 45;
-        const int parent_member_padding_x = 5; // Enough to make the line curve
-        const int cur_member_x =
-            std::max(maxXY.x, arrow_length_x) + parent_member_padding_x;
-
         int cur_member_y = lowestMemberY;
         for (auto& member : node->ownedMembers)
         {
-            member->setLeftAnchorPoint(
-                {cur_member_x, cur_member_y + member->getBoxHeight()});
+            // If it's already there no need to recurse
+            if (drawedNodes.find(member->name) == drawedNodes.cend())
+            {
+                const int arrow_length_x = 45;
+                const int parent_member_padding_x = 5; // Enough to make the line curve
+                const int cur_member_x =
+                    std::max(maxXY.x, arrow_length_x) + parent_member_padding_x;
+
+                member->setLeftAnchorPoint(
+                    {cur_member_x, cur_member_y + member->getBoxHeight()});
+
+                const Pos memberMaxXY = drawDiagram(member.get(), buffer);
+
+                maxXY.x = std::max(memberMaxXY.x, maxXY.x);
+                maxXY.y = std::max(memberMaxXY.y, maxXY.y);
+
+                cur_member_y = memberMaxXY.y;
+            }
 
             drawArrow(node->getRightAnchorPoint(),
                       member->getLeftAnchorPoint(),
                       Relation::Composition,
                       buffer);
-            const Pos memberMaxXY = drawDiagram(member.get(), buffer);
-            maxXY.x = std::max(memberMaxXY.x, maxXY.x);
-            maxXY.y = std::max(memberMaxXY.y, maxXY.y);
-
-            cur_member_y = memberMaxXY.y;
         }
     }
     // TODO: add print aggregates
+
+    // Add to drawed nodes
+    drawedNodes.insert(std::make_pair(node->name, node));
 
     return maxXY;
 }
@@ -122,18 +144,28 @@ int main()
     //    drawArrow({20, 7}, {20, 17}, Relation::Inheritance, buffer);
     std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
     head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
-    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
+
+//    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
 
     head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
-    head->ownedMembers.front()->parents.push_back(
-        std::make_unique<ClassNode>("Parent2"));
+//    head->ownedMembers.front()->parents.push_back(
+//        std::make_unique<ClassNode>("Parent2"));
 
-    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
+    head->ownedMembers.front()->parents.push_back(
+        std::make_unique<ClassNode>("MyParent"));
+
+//    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
 
     head->pos = {10, 10};
     drawDiagram(head.get(), buffer);
 
     render(buffer, out);
-
+    // Works on linux
+    const char* c = "\u25C6";
+    std::cout << "test " << c << " \u22C4-- "
+              << "\u25C6-- "
+              << "\u25C7-- "
+              << "\u25C8-- "
+              << " or " << L"\u0444";
     return 0;
 }

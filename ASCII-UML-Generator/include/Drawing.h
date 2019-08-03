@@ -133,6 +133,7 @@ int computeDistance(const Pos& start,
     return dist;
 }
 
+// TODO: Refactor to use GraphNode instead of ClassNode
 struct GraphNode
 {
     GraphNode(const Pos& pos_) : pos(pos_) {}
@@ -201,6 +202,9 @@ std::vector<Pos> findPath(const Pos& start,
 
         const Pos& cur_pos = cur_node->pos;
 
+        // Buffer& hackedBuf = const_cast<Buffer&>(buffer);
+        // hackedBuf.at(cur_pos) = '@';
+
         for (int i = Direction::UP; i != Direction::END; ++i)
         {
             Direction d = static_cast<Direction>(i);
@@ -233,11 +237,41 @@ std::vector<Pos> findPath(const Pos& start,
         }
     }
 
+    // DEBUG
+    // Buffer& hackedBuf = const_cast<Buffer&>(buffer);
+    //    hackedBuf.at(end) = 'X';
+    //   render(buffer, std::cout);
+
     // Build path
     GraphNode* end_node = &graph.find(end)->second;
     assert(end_node->cur_minimum_distance < std::numeric_limits<int>::max());
 
     GraphNode* start_node = &graph.find(start)->second;
+
+    // Debug
+
+    for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
+    {
+        std::cout << y << "\t";
+        for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
+        {
+            const Pos pos(x, y);
+            const auto& node = graph.at(pos);
+
+            const int dist = node.cur_minimum_distance;
+            if (dist < 10)
+            {
+                std::cout << '0' << dist;
+            }
+            else if (dist < 100)
+            {
+                std::cout << dist;
+            }
+            std::cout << '.';
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
 
     std::vector<Pos> path;
     for (GraphNode* cur_node = end_node;; cur_node = cur_node->parent)
@@ -251,30 +285,6 @@ std::vector<Pos> findPath(const Pos& start,
             break;
         }
     }
-
-    // Debug
-    //    for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
-    //    {
-    //        std::cout << y << "\t";
-    //        for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
-    //        {
-    //            const Pos pos(x, y);
-    //            const auto& node = graph.at(pos);
-
-    //            const int dist = node.cur_minimum_distance;
-    //            if (dist < 10)
-    //            {
-    //                std::cout << '0' << dist;
-    //            }
-    //            else if (dist < 100)
-    //            {
-    //                std::cout << dist;
-    //            }
-    //            std::cout << '.';
-    //        }
-    //        std::cout << "\n";
-    //    }
-    //    std::cout << "\n";
 
     return path;
 }
@@ -325,25 +335,48 @@ void drawLine(const Pos& start,
                     buffer.at(new_pos) = '\'';
             }
             else
+            {
                 buffer.at(new_pos) = '-';
+            }
         }
 
         last_direction = direction;
     }
+
+    // Set the last one in the direction of the previous one
+    buffer.at(*reverse_path.begin()) =
+        last_direction == directions[UP] or last_direction== directions[DOWN] ? '|' : '-';
 }
 
 void drawArrowBegin(const Pos& pos, Relation r, Buffer& buffer)
 {
     switch (r)
     {
-    case Relation::Composition:
-        // Fallthrough .. TODO: fix Composition
     case Relation::Aggregation:
-        buffer[pos.y][pos.x] = '<';
-
-        // Check it fits
-        buffer[pos.y][pos.x + 1] = '>';
+        // Fallthrough .. TODO: fix
+        // const std::string empty_diamond = "\u22C4";
         break;
+    case Relation::Composition:
+    {
+        // The unicode version looks great, but does not work well as it "eats"
+        // two extra characters from the outgoing line..
+        // const std::string diamond = "\u25C6"; // ◆
+        // Consider alternatives:
+        //    <#>-----------
+        //    <*>-----------
+        //    <>-----------
+        //    <@>-----------
+        //    <_>-----------
+        //    <.>-----------
+        //    < >-----------
+        const std::string diamond = "<>";
+
+        for (size_t i = 0; i < diamond.size(); ++i)
+        {
+            buffer[pos.y][pos.x + i] = diamond[i];
+        }
+    }
+    break;
 
     case Relation::Inheritance:
         // Nothing to do here

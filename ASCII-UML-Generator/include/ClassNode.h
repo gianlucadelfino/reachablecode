@@ -18,7 +18,7 @@ struct ClassNode
         return {pos.x + getBoxWidth() + 1, pos.y - 1};
     }
 
-    Pos getLeftAnchorPoint() const { return {pos.x, pos.y - 1}; }
+    Pos getLeftAnchorPoint() const { return {pos.x - 1, pos.y - 1}; }
 
     Pos getTopAnchorPoint() const
     {
@@ -43,7 +43,7 @@ struct ClassNode
 
     void setLeftAnchorPoint(const Pos& pos_)
     {
-        pos.x = pos_.x;
+        pos.x = pos_.x - 1;
         pos.y = pos_.y + getBoxHeight() / 2;
     }
 
