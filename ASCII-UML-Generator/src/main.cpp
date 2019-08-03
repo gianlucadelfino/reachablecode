@@ -142,19 +142,18 @@ int main()
     Buffer buffer{};
 
     //    drawArrow({20, 7}, {20, 17}, Relation::Inheritance, buffer);
-    std::unique_ptr<ClassNode> head = std::make_unique<ClassNode>("MyClass");
-    head->parents.emplace_back(std::make_unique<ClassNode>("MyParent"));
+    std::shared_ptr<ClassNode> head = std::make_shared<ClassNode>("MyClass");
+    head->parents.emplace_back(std::make_shared<ClassNode>("MyParent"));
 
-//    head->parents.emplace_back(std::make_unique<ClassNode>("MyOtherParent"));
+    head->parents.emplace_back(std::make_shared<ClassNode>("MyOtherParent"));
 
-    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass"));
-//    head->ownedMembers.front()->parents.push_back(
-//        std::make_unique<ClassNode>("Parent2"));
-
+    head->ownedMembers.emplace_back(std::make_shared<ClassNode>("OtherClass"));
     head->ownedMembers.front()->parents.push_back(
-        std::make_unique<ClassNode>("MyParent"));
+        std::make_shared<ClassNode>("Parent2"));
 
-//    head->ownedMembers.emplace_back(std::make_unique<ClassNode>("OtherClass2"));
+    head->ownedMembers.front()->parents.push_back(head->parents.front());
+
+    head->ownedMembers.emplace_back(std::make_shared<ClassNode>("OtherClass2"));
 
     head->pos = {10, 10};
     drawDiagram(head.get(), buffer);

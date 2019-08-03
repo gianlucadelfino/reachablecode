@@ -53,9 +53,9 @@ struct ClassNode
 
     Pos getTopRightCorner() const { return {pos.x + getBoxWidth(), pos.y}; }
 
-    std::vector<std::unique_ptr<ClassNode>> ownedMembers;
-    std::vector<std::unique_ptr<ClassNode>> aggregates;
-    std::vector<std::unique_ptr<ClassNode>> parents;
+    std::vector<std::shared_ptr<ClassNode>> ownedMembers;
+    std::vector<std::shared_ptr<ClassNode>> aggregates;
+    std::vector<std::shared_ptr<ClassNode>> parents;
 
     void draw(Buffer& buf) const
     {
