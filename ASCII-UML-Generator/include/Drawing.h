@@ -11,6 +11,7 @@
 #include "Buffer.h"
 #include "ClassNode.h"
 #include "Pos.h"
+#include "TimeLogger.h"
 
 namespace std
 {
@@ -88,7 +89,7 @@ enum Direction
     RIGHT,
     END
 };
-const std::vector<Pos> directions{{0, 1}, {0, -1}, {-1, 0}, {1, 0}};
+const std::vector<Pos> directions{{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
 
 int computeDistance(const Pos& start,
                     const Pos& end,
@@ -142,6 +143,13 @@ struct GraphNode
 
     GraphNode& operator=(const GraphNode&) = default;
 
+    void resetNode()
+    {
+        parent = nullptr;
+        visited = false;
+        cur_minimum_distance = std::numeric_limits<int>::max();
+    }
+
     Pos pos{};
     bool visited{};
     int cur_minimum_distance = std::numeric_limits<int>::max();
@@ -162,85 +170,99 @@ std::vector<Pos> findPath(const Pos& start,
                           Pos::Coord preferredCoord,
                           const Buffer& buffer)
 {
-    std::unordered_map<Pos, GraphNode> graph;
 
     std::vector<GraphNode*> heap;
-
-    // Insert all nodes here
-    for (int y = 0; y < static_cast<int>(buffer.size()); ++y)
-    {
-        for (int x = 0; x < static_cast<int>(buffer[0].size()); ++x)
+    static std::unordered_map<Pos, GraphNode> graph = [&heap, &buffer]() {
+        std::unordered_map<Pos, GraphNode> graph;
+        // Insert all nodes here
+        for (int y = 0; y < static_cast<int>(buffer.size()); ++y)
         {
-            auto iterPair =
+            for (int x = 0; x < static_cast<int>(buffer[0].size()); ++x)
+            {
                 graph.insert(std::make_pair(Pos(x, y), GraphNode({x, y})));
-
-            heap.push_back(std::addressof(iterPair.first->second));
+            }
         }
+        return graph;
+    }();
+
+    // reinitialise the graph nodes
+    for (auto&& posGraphNode : graph)
+    {
+        posGraphNode.second.resetNode();
+        heap.push_back(std::addressof(posGraphNode.second));
     }
+
     graph.find(start)->second.cur_minimum_distance = 0;
 
     auto compNodes = [](const GraphNode* lhs, const GraphNode* rhs) {
         return *lhs > *rhs; // > for min prioriry queue
     };
 
-    while (!heap.empty())
     {
-        std::make_heap(heap.begin(), heap.end(), compNodes);
-        std::pop_heap(heap.begin(), heap.end());
-        GraphNode* cur_node = heap.back();
-        heap.pop_back();
+        TimeLogger t("whileHeap", std::cout);
 
-        assert(!cur_node->visited);
-        cur_node->visited = true;
-
-        if (cur_node->cur_minimum_distance == std::numeric_limits<int>::max())
+        while (!heap.empty())
         {
-            // We walked all the reachable nodes and the nodes that were not
-            // occupied, not need to proceed
-            break;
-        }
+            std::make_heap(heap.begin(), heap.end(), compNodes);
+            std::pop_heap(heap.begin(), heap.end());
+            GraphNode* cur_node = heap.back();
+            heap.pop_back();
 
-        const Pos& cur_pos = cur_node->pos;
+            assert(!cur_node->visited);
+            cur_node->visited = true;
 
-        // Buffer& hackedBuf = const_cast<Buffer&>(buffer);
-        // hackedBuf.at(cur_pos) = '@';
-
-        for (int i = Direction::UP; i != Direction::END; ++i)
-        {
-            Direction d = static_cast<Direction>(i);
-            const Pos new_pos = cur_pos + directions[d];
-
-            // If you find an empty cell, then consider the branch
-            if (buffer.isPosValid(new_pos) &&
-                buffer.at(new_pos).type() != Buffer::ElemType::Box)
+            if (cur_node->cur_minimum_distance ==
+                std::numeric_limits<int>::max())
             {
-                GraphNode& adjacient_node = graph.find(new_pos)->second;
+                // We walked all the reachable nodes and the nodes that were not
+                // occupied, not need to proceed
+                break;
+            }
 
-                if (adjacient_node.visited)
-                    continue;
+            const Pos& cur_pos = cur_node->pos;
 
-                const int delta_distance = computeDistance(
-                    start, end, cur_pos, new_pos, preferredCoord);
+            //         Buffer& hackedBuf = const_cast<Buffer&>(buffer);
+            //         hackedBuf.at(cur_pos) = '@';
 
-                // Check for overflow
-                assert(cur_node->cur_minimum_distance !=
-                       std::numeric_limits<int>::max());
-                const int cur_dist_to_node =
-                    cur_node->cur_minimum_distance + delta_distance;
+            for (int i = Direction::UP; i != Direction::END; ++i)
+            {
+                const Direction d = static_cast<Direction>(i);
+                const Pos new_pos = cur_pos + directions[d];
 
-                if (cur_dist_to_node < adjacient_node.cur_minimum_distance)
+                // If you find an empty cell, then consider the branch
+                if (buffer.isPosValid(new_pos) &&
+                    buffer.at(new_pos).type() != Buffer::ElemType::Box)
                 {
-                    adjacient_node.parent = cur_node;
-                    adjacient_node.cur_minimum_distance = cur_dist_to_node;
+                    GraphNode& adjacient_node = graph.find(new_pos)->second;
+
+                    if (adjacient_node.visited)
+                        continue;
+
+                    const int delta_distance = computeDistance(
+                        start, end, cur_pos, new_pos, preferredCoord);
+
+                    // Check for overflow
+                    assert(cur_node->cur_minimum_distance !=
+                           std::numeric_limits<int>::max());
+                    const int cur_dist_to_node =
+                        cur_node->cur_minimum_distance + delta_distance;
+
+                    if (cur_dist_to_node < adjacient_node.cur_minimum_distance)
+                    {
+                        adjacient_node.parent = cur_node;
+                        adjacient_node.cur_minimum_distance = cur_dist_to_node;
+                    }
                 }
             }
         }
     }
 
     // DEBUG
-    // Buffer& hackedBuf = const_cast<Buffer&>(buffer);
-    //    hackedBuf.at(end) = 'X';
-    //   render(buffer, std::cout);
+    //     Buffer& hackedBuf = const_cast<Buffer&>(buffer);
+    //        hackedBuf.at(end) = 'X';
+    //       render(buffer);
+    //       refresh();
+    //       return {{1,2},{1,3}};
 
     // Build path
     GraphNode* end_node = &graph.find(end)->second;
@@ -249,29 +271,28 @@ std::vector<Pos> findPath(const Pos& start,
     GraphNode* start_node = &graph.find(start)->second;
 
     // Debug
+    //    for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
+    //    {
+    //        std::cout << y << "\t";
+    //        for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
+    //        {
+    //            const Pos pos(x, y);
+    //            const auto& node = graph.at(pos);
 
-    for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
-    {
-        std::cout << y << "\t";
-        for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
-        {
-            const Pos pos(x, y);
-            const auto& node = graph.at(pos);
-
-            const int dist = node.cur_minimum_distance;
-            if (dist < 10)
-            {
-                std::cout << '0' << dist;
-            }
-            else if (dist < 100)
-            {
-                std::cout << dist;
-            }
-            std::cout << '.';
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
+    //            const int dist = node.cur_minimum_distance;
+    //            if (dist < 10)
+    //            {
+    //                std::cout << '0' << dist;
+    //            }
+    //            else if (dist < 100)
+    //            {
+    //                std::cout << dist;
+    //            }
+    //            std::cout << '.';
+    //        }
+    //        std::cout << "\n";
+    //    }
+    //    std::cout << "\n";
 
     std::vector<Pos> path;
     for (GraphNode* cur_node = end_node;; cur_node = cur_node->parent)
@@ -345,7 +366,9 @@ void drawLine(const Pos& start,
 
     // Set the last one in the direction of the previous one
     buffer.at(*reverse_path.begin()) =
-        last_direction == directions[UP] or last_direction== directions[DOWN] ? '|' : '-';
+        last_direction == directions[UP] or last_direction == directions[DOWN] ?
+            '|' :
+            '-';
 }
 
 void drawArrowBegin(const Pos& pos, Relation r, Buffer& buffer)

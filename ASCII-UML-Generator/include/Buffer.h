@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 
 #include "Pos.h"
 
@@ -11,18 +12,20 @@ class Buffer
 public:
     enum class ElemType : uint8_t
     {
+        Undefined = 0,
         Box,
         Arrow,
-        Undefined
     };
     class BufferElem
     {
     public:
         BufferElem() : BufferElem(0) {}
-        // not explit!
         explicit BufferElem(char c) : _elem(c), _elemType(ElemType::Undefined)
         {
         }
+
+        BufferElem(const BufferElem& other_) : _elem(other_._elem), _elemType(other_._elemType) {}
+        void operator=(const BufferElem& other_) { _elem = other_._elem; _elemType = other_._elemType; }
 
         void operator=(char c) { _elem = c; }
         operator char&() { return _elem; }
@@ -40,7 +43,7 @@ private:
     {
 
     public:
-        using LineType = std::array<BufferElem, 100>;
+        using LineType = std::array<BufferElem, 128>;
 
         LineType::const_iterator cbegin() const { return _line.cbegin(); }
         LineType::iterator begin() { return _line.begin(); }
@@ -64,6 +67,8 @@ private:
             return _line.at(i);
         }
 
+         void clear() { for(auto&& item : _line) { item = BufferElem(); } }
+
         size_t size() const { return _line.size(); }
 
     private:
@@ -73,6 +78,10 @@ private:
     BufferType _buffer{};
 
 public:
+    Buffer() = default;
+    Buffer(const Buffer&) = delete;
+    Buffer& operator=(const Buffer&) = delete;
+
     BufferLine& operator[](int i)
     {
         assert(i >= 0);
@@ -87,9 +96,15 @@ public:
         return _buffer.at(i);
     }
 
-    BufferElem& at(const Pos& pos) { return this->operator[](pos.y)[pos.x]; }
+    BufferElem& at(const Pos& pos)
+    {
+        assert(isPosValid(pos));
+        return this->operator[](pos.y)[pos.x];
+    }
+
     BufferElem at(const Pos& pos) const
     {
+        assert(isPosValid(pos));
         return this->operator[](pos.y)[pos.x];
     }
 
@@ -125,49 +140,39 @@ public:
     BufferType::reverse_iterator rend() { return _buffer.rend(); }
 
     size_t size() const { return _buffer.size(); }
+
+    void clear()
+    {
+        for (size_t y = 0; y != _buffer.size(); ++y)
+            _buffer[y].clear();
+    }
 };
 
-void render(const Buffer& buf, std::ostream& out)
+void render(const Buffer& buf)
 {
-    for (size_t i = buf.size() - 1; i != 0; --i)
+    for (size_t y = 0; y != buf.size(); ++y)
     {
-        const auto& line = buf[i];
-        out << i << "\t";
-        for (auto c : line)
+        for (size_t x = 0; x != buf[0].size(); ++x)
         {
-            if (c)
-                out << c;
-            else
-                out << '.';
+            const auto buf_elem = buf[y][x];
+            // DEBUG
+            //                        char c{};
+            //                        switch (buf_elem.type())
+            //                        {
+            //                        case Buffer::ElemType::Box:
+            //                            c = 'B';
+            //                            break;
+            //                        case Buffer::ElemType::Arrow:
+            //                            c = 'A';
+            //                            break;
+            //                        default:
+            //                            c = buf_elem;
+            //                            break;
+            //                        }
+
+            const int c = buf_elem ? buf_elem : ' ';
+            mvaddch(y, x, c);
         }
-        out << "\n";
+        mvprintw(y, 0, "%d", y);
     }
-    //    out << "\t";
-    //    for (size_t i = 0; i < buf.size(); ++i)
-    //    {
-    //        out << i;
-    //    }
-    //    out << "n";
-    //    // Debug Box layer
-    //    for (size_t i = buf.size() - 1; i != 0; --i)
-    //    {
-    //        const auto& line = buf[i];
-    //        out << i << "\t";
-    //        for (auto c : line)
-    //        {
-    //            switch (c.type())
-    //            {
-    //            case Buffer::ElemType::Box:
-    //                out << 'B';
-    //                break;
-    //            case Buffer::ElemType::Arrow:
-    //                out << 'A';
-    //                break;
-    //            default:
-    //                out << '.';
-    //                break;
-    //            }
-    //        }
-    //        out << "\n";
-    //    }
 }

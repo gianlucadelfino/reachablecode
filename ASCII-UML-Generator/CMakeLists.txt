@@ -17,18 +17,25 @@ SET(CMAKE_CXX_COMPILER /usr/bin/g++-9)
 set(GCC_DIALECT_FLAGS "-std=c++2a -fconcepts")
 
 # Change this for release
-set(CMAKE_BUILD_TYPE "debug")
+set(CMAKE_BUILD_TYPE "release")
 
 if(CMAKE_BUILD_TYPE MATCHES "[Rr][Ee][Ll][Ee][Aa][Ss][Ee]")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
 elseif(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]" OR CMAKE_BUILD_TYPE STREQUAL "")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS} ${GCC_SANITIZE_FLAGS} ${GCC_DEBUG_FLAGS}")
+elseif(CMAKE_BUILD_TYPE MATCHES "[Pp][Rr][Oo][Ff][Ii][Ll][Ee]")
+    set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} -O1 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
 endif()
 
 file(GLOB_RECURSE SRCS *.cpp)
 file(GLOB_RECURSE HDRS *.h)
 
+set(UTILS_HEADERS "../utils")
+
 message(STATUS "Globbed files ${SRCS} ${HDRS}")
 
+find_package(Curses REQUIRED)
+
 add_executable(ASCII-UML-Generator ${SRCS} ${HDRS})
-target_include_directories(ASCII-UML-Generator PUBLIC include)
+target_link_libraries(ASCII-UML-Generator ${CURSES_LIBRARIES})
+target_include_directories(ASCII-UML-Generator PUBLIC include ${CURSES_INCLUDE_DIR} ${UTILS_HEADERS})
