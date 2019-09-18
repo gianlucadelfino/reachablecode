@@ -1,6 +1,9 @@
 #pragma once
 
+#include <list>
 #include <map>
+#include <thread>
+#include <future>
 
 #include "Buffer.h"
 #include "ClassNode.h"
@@ -185,27 +188,39 @@ private:
     // parent or member diagram. These are used to draw the next element.
     void drawImpl(Buffer& buffer_)
     {
+//        TimeLogger t("drawImpl", std::cout);
+
+        std::list<std::thread> threads;
+
         for (auto& [name, node] : _drawedNodes)
         {
-            node->draw(buffer_);
+            threads.emplace_back(
+                [&buffer_, this, id = threads.size(), &name, &node]() mutable{
+                    node->draw(buffer_);
 
-            for (auto& parent : node->parents)
-            {
-                drawArrow(node->getTopAnchorPoint(),
-                          parent->getBottomAnchorPoint(),
-                          Relation::Inheritance,
-                          buffer_);
-            }
+                    for (auto& parent : node->parents)
+                    {
+                        drawArrow(node->getTopAnchorPoint(),
+                                  parent->getBottomAnchorPoint(),
+                                  Relation::Inheritance,
+                                  buffer_);
+                    }
 
-            for (auto& member : node->ownedMembers)
-            {
-                drawArrow(node->getRightAnchorPoint(),
-                          member->getLeftAnchorPoint(),
-                          Relation::Composition,
-                          buffer_);
-            }
+                    for (auto& member : node->ownedMembers)
+                    {
+                        drawArrow(node->getRightAnchorPoint(),
+                                  member->getLeftAnchorPoint(),
+                                  Relation::Composition,
+                                  buffer_);
+                    }
 
-            // TODO: add print aggregates
+                    // TODO: add print aggregates
+                });
+        }
+
+        for (auto&& t : threads)
+        {
+            t.join();
         }
     }
 

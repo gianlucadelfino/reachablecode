@@ -16,8 +16,13 @@ struct Pos
     int y{};
 
     bool operator==(const Pos& rhs) const { return x == rhs.x && y == rhs.y; }
-
     bool operator!=(const Pos& rhs) const { return !operator==(rhs); }
+
+    void swap(Pos& other_) noexcept
+    {
+        std::swap(x, other_.x);
+        std::swap(y, other_.y);
+    }
 
     enum class Coord
     {

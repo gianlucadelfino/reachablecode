@@ -1,5 +1,6 @@
 #include <array>
 #include <cassert>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -7,14 +8,12 @@
 #include <stdio.h>
 #include <utility>
 #include <vector>
-#include <fstream>
-
-#include <ncurses.h>
 
 #include "Buffer.h"
 #include "ClassDiagram.h"
 #include "ClassNode.h"
 #include "Drawing.h"
+#include "NCursesManager.h"
 #include "TimeLogger.h"
 
 int main()
@@ -28,107 +27,90 @@ int main()
 
     ClassDiagram diagram(buffer);
 
-    const int WIDTH = buffer[0].size();
-    const int HEIGHT = buffer.size();
+    NCursesManager ncursesManager;
 
-    // Construtor
-    //    {
-    initscr();
-    clear();
-    noecho();
-    cbreak();
-    WINDOW* window = newwin(HEIGHT, WIDTH, 0, 0);
-    keypad(window, TRUE);
-    mvprintw(
+    ncursesManager.printOnScreen(
         0, 0, "Use arrow keys to select the class to move, then press enter");
-    //    }
 
-    // Run()
-    //{
-    refresh();
-    mousemask(ALL_MOUSE_EVENTS, NULL);
     Pos delta_start;
-    int runs = 4;
-    while (runs)
+
+    while (true)
     {
-        --runs;
         {
             TimeLogger t("render", stats);
-            render(buffer);
+            ncursesManager.render(buffer);
         }
-        refresh();
 
-        const int ch = wgetch(window);
-        if (ch == KEY_MOUSE)
+        MouseEvent event = ncursesManager.getMouseEvent();
+
+        if (event.eventType == MouseEvent::EventType::Released)
         {
-            MEVENT mouse_event{};
-            if (getmouse(&mouse_event) == OK)
+            Pos delta_end(event.pos.x, event.pos.y);
+            mvprintw(
+                0, 0, "Released button %d %d      ", delta_end.x, delta_end.y);
             {
-                if (mouse_event.bstate & BUTTON1_RELEASED)
-                {
-                    Pos delta_end(mouse_event.x, mouse_event.y);
-                    mvprintw(0,
-                             0,
-                             "Released button %d %d",
-                             delta_end.x,
-                             delta_end.y);
-                    {
-                        TimeLogger t("move", stats);
-                        diagram.moveClass(delta_start, delta_end);
-                    }
-                    {
-                        TimeLogger t("draw", stats);
-                        diagram.draw(buffer);
-                    }
-                }
-                else if (mouse_event.bstate & BUTTON1_PRESSED)
-                {
-                    delta_start = Pos(mouse_event.x, mouse_event.y);
-                    mvprintw(0,
-                             0,
-                             "Mouse PRESSED Event %d %d",
-                             delta_start.x,
-                             delta_start.y);
-                }
-                else if (mouse_event.bstate)
-                {
-                    Pos delta_end(mouse_event.x, mouse_event.y);
-                    mvprintw(1, 0, "bstate %d %d", delta_end.x, delta_end.y);
-                    //                    diagram.moveClass(delta_start,
-                    //                    delta_end); diagram.draw(buffer);
-                }
+                TimeLogger t("move", stats);
+                diagram.moveClass(delta_start, delta_end);
             }
+            {
+                TimeLogger t("draw", stats);
+                diagram.draw(buffer);
+            }
+        }
+        else if (event.eventType == MouseEvent::EventType::Pressed)
+        {
+            delta_start = Pos(event.pos.x, event.pos.y);
+            mvprintw(0,
+                     0,
+                     "Mouse PRESSED Event %d %d   ",
+                     delta_start.x,
+                     delta_start.y);
         }
         else
         {
+            // Not working
+            //            if (false)
+            //            {
+            //                Pos delta_end(event.pos.x, event.pos.y);
 
-            //        else
-            {
-                const int y = getcury(window);
-                const int x = getcurx(window);
-                mvprintw(2, 0, "Mouse pos %d %d", x, y);
-
-                //  if (pressed)
-            }
-
-            mvprintw(3,
-                     0,
-                     "Charcter pressed is = %3d Hopefully it can be "
-                     "printed as '%c'",
-                     ch,
-                     ch);
+            //                if (delta_end != delta_start)
+            //                {
+            //                    mvprintw(0,
+            //                             0,
+            //                             "Released button %d %d",
+            //                             delta_end.x,
+            //                             delta_end.y);
+            //                    {
+            //                        TimeLogger t("move", stats);
+            //                        diagram.moveClass(delta_start, delta_end);
+            //                    }
+            //                    {
+            //                        TimeLogger t("draw", stats);
+            //                        diagram.draw(buffer);
+            //                    }
+            //                    delta_start = event.pos;
+            //                }
+            //            }
+            //            else
+            //            {
+            //                mvprintw(2,
+            //                         0,
+            //                         "Mouse pos %d %d id %d",
+            //                         event.pos.x,
+            //                         event.pos.y,
+            //                         static_cast<uint32_t>(event.eventType));
+            //            }
+            //                            }
+            //                        }
         }
 
         {
             TimeLogger t("refresh", stats);
-            refresh();
+            ncursesManager.refresh();
         }
     }
 
-    // Destructor
-    clrtoeol();
-    refresh();
-    endwin();
+    //    printf("\033[?1003l\n"); // Disable mouse movement events, as l = low
 
     return 0;
 }

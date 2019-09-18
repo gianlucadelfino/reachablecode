@@ -148,31 +148,3 @@ public:
     }
 };
 
-void render(const Buffer& buf)
-{
-    for (size_t y = 0; y != buf.size(); ++y)
-    {
-        for (size_t x = 0; x != buf[0].size(); ++x)
-        {
-            const auto buf_elem = buf[y][x];
-            // DEBUG
-            //                        char c{};
-            //                        switch (buf_elem.type())
-            //                        {
-            //                        case Buffer::ElemType::Box:
-            //                            c = 'B';
-            //                            break;
-            //                        case Buffer::ElemType::Arrow:
-            //                            c = 'A';
-            //                            break;
-            //                        default:
-            //                            c = buf_elem;
-            //                            break;
-            //                        }
-
-            const int c = buf_elem ? buf_elem : ' ';
-            mvaddch(y, x, c);
-        }
-        mvprintw(y, 0, "%d", y);
-    }
-}

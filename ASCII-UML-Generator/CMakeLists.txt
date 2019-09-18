@@ -37,5 +37,5 @@ message(STATUS "Globbed files ${SRCS} ${HDRS}")
 find_package(Curses REQUIRED)
 
 add_executable(ASCII-UML-Generator ${SRCS} ${HDRS})
-target_link_libraries(ASCII-UML-Generator ${CURSES_LIBRARIES})
+target_link_libraries(ASCII-UML-Generator ${CURSES_LIBRARIES} pthread)
 target_include_directories(ASCII-UML-Generator PUBLIC include ${CURSES_INCLUDE_DIR} ${UTILS_HEADERS})

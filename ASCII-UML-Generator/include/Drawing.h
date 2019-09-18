@@ -150,6 +150,14 @@ struct GraphNode
         cur_minimum_distance = std::numeric_limits<int>::max();
     }
 
+    void swap(GraphNode& other_) noexcept
+    {
+        std::swap(parent, other_.parent);
+        std::swap(pos, other_.pos);
+        std::swap(visited, other_.visited);
+        std::swap(cur_minimum_distance, other_.cur_minimum_distance);
+    }
+
     Pos pos{};
     bool visited{};
     int cur_minimum_distance = std::numeric_limits<int>::max();
@@ -172,7 +180,7 @@ std::vector<Pos> findPath(const Pos& start,
 {
 
     std::vector<GraphNode*> heap;
-    static std::unordered_map<Pos, GraphNode> graph = [&heap, &buffer]() {
+    thread_local std::unordered_map<Pos, GraphNode> graph = [&heap, &buffer]() {
         std::unordered_map<Pos, GraphNode> graph;
         // Insert all nodes here
         for (int y = 0; y < static_cast<int>(buffer.size()); ++y)
@@ -194,21 +202,31 @@ std::vector<Pos> findPath(const Pos& start,
 
     graph.find(start)->second.cur_minimum_distance = 0;
 
-    auto compNodes = [](const GraphNode* lhs, const GraphNode* rhs) {
-        return *lhs > *rhs; // > for min prioriry queue
-    };
+    //        auto compNodes = [](const GraphNode* lhs, const GraphNode* rhs) {
+    //            return *lhs > *rhs; // > for min prioriry queue
+    //        };
 
     {
-        TimeLogger t("whileHeap", std::cout);
+//        TimeLogger t("whileHeap", std::cout);
 
+        int cur_min_end_distance = std::numeric_limits<int>::max();
         while (!heap.empty())
         {
-            std::make_heap(heap.begin(), heap.end(), compNodes);
-            std::pop_heap(heap.begin(), heap.end());
+            //            std::make_heap(heap.begin(), heap.end(), compNodes);
+            //            std::pop_heap(heap.begin(), heap.end());
+            auto min_node_iter = std::min_element(
+                heap.begin(),
+                heap.end(),
+                [](const GraphNode* const lhs_, const GraphNode* const rhs_) {
+                    return lhs_->cur_minimum_distance <
+                           rhs_->cur_minimum_distance;
+                });
+            std::swap(*min_node_iter, *heap.rbegin());
             GraphNode* cur_node = heap.back();
             heap.pop_back();
 
             assert(!cur_node->visited);
+
             cur_node->visited = true;
 
             if (cur_node->cur_minimum_distance ==
@@ -217,6 +235,13 @@ std::vector<Pos> findPath(const Pos& start,
                 // We walked all the reachable nodes and the nodes that were not
                 // occupied, not need to proceed
                 break;
+            }
+
+            if (cur_node->cur_minimum_distance >= cur_min_end_distance)
+            {
+                // No need to go down this path as it's already longer than
+                // some other path to the end
+                continue;
             }
 
             const Pos& cur_pos = cur_node->pos;
@@ -271,28 +296,29 @@ std::vector<Pos> findPath(const Pos& start,
     GraphNode* start_node = &graph.find(start)->second;
 
     // Debug
-    //    for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
-    //    {
-    //        std::cout << y << "\t";
-    //        for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
+    //    std::ofstream debugFile("deleteme");
+    //        for (CoordMover y(end.y, start.y); !y.done(); y.move_closer())
     //        {
-    //            const Pos pos(x, y);
-    //            const auto& node = graph.at(pos);
+    //            debugFile << y << "\t";
+    //            for (CoordMover x(start.x, end.x); !x.done(); x.move_closer())
+    //            {
+    //                const Pos pos(x, y);
+    //                const auto& node = graph.at(pos);
 
-    //            const int dist = node.cur_minimum_distance;
-    //            if (dist < 10)
-    //            {
-    //                std::cout << '0' << dist;
+    //                const int dist = node.cur_minimum_distance;
+    //                if (dist < 10)
+    //                {
+    //                    debugFile << '0' << dist;
+    //                }
+    //                else if (dist < 100)
+    //                {
+    //                    debugFile << dist;
+    //                }
+    //                debugFile << '.';
     //            }
-    //            else if (dist < 100)
-    //            {
-    //                std::cout << dist;
-    //            }
-    //            std::cout << '.';
+    //            debugFile << "\n";
     //        }
-    //        std::cout << "\n";
-    //    }
-    //    std::cout << "\n";
+    //        debugFile << "\n";
 
     std::vector<Pos> path;
     for (GraphNode* cur_node = end_node;; cur_node = cur_node->parent)
