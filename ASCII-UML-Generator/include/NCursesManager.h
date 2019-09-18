@@ -47,6 +47,9 @@ public:
         clrtoeol();
         refresh();
         endwin();
+
+        // Disable mouse movement events, as l = low
+        //    printf("\033[?1003l\n");
     }
 
     void printOnScreen(int x_, int y_, const std::string& message_) const
