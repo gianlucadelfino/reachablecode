@@ -1,0 +1,1 @@
+LD_LIBRARY_PATH=/usr/local/clang_9.0.0/lib clear && /usr/local/clang_9.0.0/bin/clang++  -stdlib=libc++ -fcoroutines-ts -masm=intel  -Wall -Werror -std=c++2a -O2 -S -c ${1} -o /dev/stdout | c++filt | sed -e '/\s\.[a-z]/d'
