@@ -17,12 +17,11 @@ find_package(OpenCL REQUIRED)
 # Gnuplot
 find_package(Gnuplot REQUIRED)
 
-
 # set the 3rd parties include
-set(3RD_PARTIES_INCLUDE "../../3rdParties")
+set(3RD_PARTIES_INCLUDE "../3rdParties")
 
 # Set this to the location of RandomCL generators
-add_compile_definitions(GENERATOR_LOCATION="${CMAKE_SOURCE_DIR}/../../3rdParties/RandomCL/generators")
+add_compile_definitions(GENERATOR_LOCATION="${CMAKE_SOURCE_DIR}/../3rdParties/RandomCL/generators")
 
 set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
 
