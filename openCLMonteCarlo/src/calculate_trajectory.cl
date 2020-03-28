@@ -33,12 +33,12 @@ kernel void calculate_trajectory(
         float cos_rand2;
         const float sin_rand2 = sincos(rand2 * two_pi, &cos_rand2);
 
-        const float gauss_rand1 = variance_ * sqrt(rand1_log) * cos_rand2;
-        const float gauss_rand2 = variance_ * sqrt(rand1_log) * sin_rand2;
+        const float epsilon1 = sqrt(rand1_log) * cos_rand2;
+        const float epsilon2 = sqrt(rand1_log) * sin_rand2;
 
-        // Now increment the value "dt*r + epsilon*dW"
-        share_value_ += dt_ * rate_ + gauss_rand1 * sqrt(dt_);
-        share_value_ += dt_ * rate_ + gauss_rand2 * sqrt(dt_);
+        // Now increment the value "dt*rate + variance * epsilon * dW"
+        share_value_ += share_value_ * (dt_ * rate_ + variance_ * epsilon1 * sqrt(dt_));
+        share_value_ += share_value_ * (dt_ * rate_ + variance_ * epsilon2 * sqrt(dt_));
     }
 
     final_values_[i] = share_value_;

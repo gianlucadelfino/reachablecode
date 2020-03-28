@@ -55,8 +55,8 @@ int main()
 
     const float initial_share_value = 1.f; // Start at 1 dollar
     const float interest_rate = 0.05f;
-    const float dt = 0.1f;
     const int num_iterations = 365;
+    const float dt = 0.05f;
     const float gaussian_variance = 0.1f;
 
     const size_t num_trajectories = 10000;
