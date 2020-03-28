@@ -22,6 +22,7 @@ int main()
     ss << kernelFile.rdbuf();
     const std::string kernelSource = ss.str();
 
+    // Debug
     // std::cout << kernelSource << std::endl;
 
     // Get platform and device information
@@ -50,14 +51,7 @@ int main()
     cl::Program program(context, sources);
 
     program.build(std::vector<cl::Device>({device}), COMPILE_OPTS);
-    // std::cout << "CL Build info: "
-    //           << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
     cl::Kernel kernel(program, "calculate_trajectory");
-
-    // Set the kernel arguments
-    // kernel void calculate_trajectory(
-    //      float share_value_, const float rate_, const float dt_, int
-    //      num_iterations_, const float variance_, global float* final_values_)
 
     const float initial_share_value = 1.f; // Start at 1 dollar
     const float interest_rate = 0.05f;
