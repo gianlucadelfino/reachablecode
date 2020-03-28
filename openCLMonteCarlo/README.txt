@@ -6,5 +6,8 @@ mkdir build
 cd build
 cmake ../
 make
+./MonteCarloOpenCL
+gnuplot create_histogram.gnuplot
 
+// The file histogram.png should be now in the build directory
 
