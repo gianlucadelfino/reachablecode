@@ -1,10 +1,5 @@
 #include <msws.cl>
 
-ulong _msws_ulong2(msws_state* state){
-	state->x *= state->x;
-	state->x += (state->w += 0xb5ad4eceda1ce2a9);
-	return state->x = (state->x>>32) | (state->x<<32);
-}
 kernel void calculate_trajectory(
     float share_value_,
     const float rate_,
@@ -36,7 +31,7 @@ kernel void calculate_trajectory(
         const float rand1_log = -2 * log(rand1);
 
         float cos_rand2;
-        const float sin_rand2 = sincos(rand2, &cos_rand2);
+        const float sin_rand2 = sincos(rand2 * two_pi, &cos_rand2);
 
         const float gauss_rand1 = variance_ * sqrt(rand1_log) * cos_rand2;
         const float gauss_rand2 = variance_ * sqrt(rand1_log) * sin_rand2;

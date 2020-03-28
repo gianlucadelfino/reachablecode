@@ -14,9 +14,6 @@ find_package (Threads)
 # OpenCL
 find_package(OpenCL REQUIRED)
 
-# Gnuplot
-find_package(Gnuplot REQUIRED)
-
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "../3rdParties")
 
@@ -48,6 +45,7 @@ endif()
 set(SRCS src/main.cpp)
 
 configure_file(src/calculate_trajectory.cl calculate_trajectory.cl COPYONLY)
+configure_file(create_histogram.gnuplot create_histogram.gnuplot COPYONLY)
 
 add_executable(MonteCarloOpenCL ${SRCS} ${HDRS})
 target_link_libraries(MonteCarloOpenCL ${OpenCL_LIBRARY})

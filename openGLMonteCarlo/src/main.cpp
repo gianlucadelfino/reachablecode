@@ -8,9 +8,9 @@
 #include <sstream>
 #include <vector>
 
+
 #define PLATFORM 0
 #define DEVICE 0
-#define N_THREADS 128
 
 #define COMPILE_OPTS "-I " GENERATOR_LOCATION
 
@@ -50,8 +50,8 @@ int main()
     cl::Program program(context, sources);
 
     program.build(std::vector<cl::Device>({device}), COMPILE_OPTS);
-    std::cout << "CL Build info: "
-              << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
+    // std::cout << "CL Build info: "
+    //           << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << "\n";
     cl::Kernel kernel(program, "calculate_trajectory");
 
     // Set the kernel arguments
@@ -65,7 +65,7 @@ int main()
     const int num_iterations = 365;
     const float gaussian_variance = 0.1f;
 
-    const size_t num_trajectories = 10;
+    const size_t num_trajectories = 10000;
     cl::Buffer cl_final_share_values(
         context, CL_MEM_WRITE_ONLY, num_trajectories * sizeof(cl_float));
 
@@ -79,7 +79,7 @@ int main()
     // Run The kernel
     cl::Event e;
     queue.enqueueNDRangeKernel(
-        kernel, cl::NullRange, cl::NDRange(N_THREADS), cl::NullRange, nullptr, &e);
+        kernel, cl::NullRange, cl::NDRange(num_trajectories), cl::NullRange, nullptr, &e);
     e.wait();
 
     std::vector<float> res(num_trajectories);
@@ -89,12 +89,11 @@ int main()
                             num_trajectories * sizeof(cl_float),
                             &res[0]);
 
-    // print results
+    std::ofstream results_file("out.txt");
     for (cl_float num : res)
     {
-        std::cout << num << "\t";
+        results_file << num << "\n";
     }
-    std::cout << std::endl;
 
     return 0;
 }
