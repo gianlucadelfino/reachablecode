@@ -14,9 +14,6 @@ find_package(Threads)
 # OpenCv
 find_package(OpenCV REQUIRED)
 
-# NB Blacklist for libfontconfig
-configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
-
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}")
 # Tesseract
 find_package(Tesseract REQUIRED)

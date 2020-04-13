@@ -220,7 +220,7 @@ int main()
     {
         cv::Mat frame = win.getFrame();
 
-        // If the frame is empty, break immediately
+        // If the frame is empty, continue
         if (frame.empty())
         {
             std::cerr << "Emtpy frame";

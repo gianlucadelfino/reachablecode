@@ -22,6 +22,9 @@ set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
 # ftrapv checks for overflow and crashes the program if it happens.
 set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv")
 
+# set the common include
+set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
+
 # NB Blacklist for libfontconfig
 configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
 
@@ -51,4 +54,4 @@ add_executable(cUDP ${SRCS} ${HDRS})
 
 target_link_libraries(cUDP ${OpenCV_LIBS} ${CLANG_LINK_LIBS})
 
-include_directories(SYSTEM ${3RD_PARTIES_INCLUDE})
+include_directories(SYSTEM ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
