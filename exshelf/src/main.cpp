@@ -1,212 +1,30 @@
+#include <algorithm>
+#include <atomic>
+#include <cctype>
 #include <chrono>
 #include <iostream>
+#include <math.h>
+#include <mutex>
 #include <sstream>
 #include <thread>
 
 #include "opencv2/opencv.hpp"
+
+// Requires opencv4
+#include <opencv2/dnn.hpp>
 #include <tesseract/baseapi.h>
 
-#include "Math.h"
+#include "Library.h"
+#include "OCRText.h"
+#include "OpenCVUtils.h"
 #include "VideoWindow.h"
-
-struct BookTitle
-{
-    explicit BookTitle(
-        const std::vector<std::pair<int, std::string>>& weightsAndWords_)
-        : _weightsAndWords(weightsAndWords_),
-          _wordScores([&weightsAndWords_]() {
-              std::map<std::string, int> map;
-              for (auto& scoreAndWord : weightsAndWords_)
-              {
-                  map.insert(
-                      std::make_pair(scoreAndWord.second, scoreAndWord.first));
-              }
-              return map;
-          }())
-    {
-    }
-
-    BookTitle(BookTitle&& other_)
-        : _weightsAndWords(std::move(other_._weightsAndWords)),
-          _wordScores(std::move(other_._wordScores))
-    {
-    }
-
-    BookTitle& operator=(BookTitle&& other_)
-    {
-        _weightsAndWords = std::move(other_._weightsAndWords);
-        _wordScores = std::move(other_._wordScores);
-        return *this;
-    }
-
-    BookTitle& operator=(const BookTitle&) = delete;
-
-    std::string getTitle() const
-    {
-        std::string title;
-        for (auto& weightAndWord : _weightsAndWords)
-        {
-            title += " " + weightAndWord.second;
-        }
-        return title;
-    }
-
-    bool matches(const BookTitle& other_) const
-    {
-        int common_words{};
-        for (auto& wordScore : _wordScores)
-        {
-            const std::string& our_word = wordScore.first;
-            const auto otherWordScoreIter = other_._wordScores.find(our_word);
-            if (otherWordScoreIter != other_._wordScores.cend())
-            {
-                // Common word has been found
-                common_words++;
-            }
-        }
-        const size_t num_words_other = other_._weightsAndWords.size();
-        const size_t num_words_this = _weightsAndWords.size();
-        const float match_score =
-            2 * common_words /
-            static_cast<float>(num_words_other + num_words_this);
-
-        // Let's say 80..
-        // DEbUG
-        std::cout << "\tComputing match " << other_.getTitle() << " vs "
-                  << getTitle() << ", score: " << match_score
-                  << std::endl;
-
-        return match_score >= 0.4f;
-    }
-
-    float score() const
-    {
-        return std::accumulate(
-            _weightsAndWords.cbegin(),
-            _weightsAndWords.cend(),
-            0.f,
-            [](float sum, auto& item) { return sum + item.first; });
-    }
-
-private:
-    std::vector<std::pair<int, std::string>> _weightsAndWords;
-    std::map<std::string, int> _wordScores;
-};
-
-class Library
-{
-public:
-    void insert(BookTitle&& new_book_)
-    {
-        // Check if is there
-        // Linear search here. We could do better but let's not bother for now
-        for (BookTitle& book : _books)
-        {
-            if (book.matches(new_book_))
-            {
-                if (new_book_.score() > book.score())
-                {
-                    // DEBUG
-                    std::cout << "\tFound same book, replace "
-                              << new_book_.getTitle() << std::endl;
-                    book = std::move(new_book_);
-                }
-                else
-                {
-                    std::cout << "\tFound same book, don't replace "
-                              << new_book_.getTitle() << std::endl;
-                }
-                return;
-            }
-            else {
-                std::cout << "DIDN NOT MATCH\n";
-            }
-        }
-
-        // DEBUG
-        std::cout << "\tBook not found in library, just add: "
-                  << new_book_.getTitle() << std::endl;
-        // Not found. Just add
-        _books.emplace_back(std::move(new_book_));
-    }
-
-    std::vector<std::string> getTitles() const
-    {
-        std::vector<std::string> titles;
-
-        for (auto& book : _books)
-        {
-            titles.push_back(book.getTitle());
-        }
-        return titles;
-    }
-
-private:
-    std::vector<BookTitle> _books;
-};
-
-class OCRText
-{
-public:
-    explicit OCRText(const char* const TSVtext_) : _text(TSVtext_) {}
-
-    ~OCRText() { delete[] _text; }
-
-    char operator[](size_t i) { return _text[i]; }
-
-    const char* getText() const { return _text; }
-
-    std::vector<std::vector<std::pair<int, std::string>>> getBooks() const
-    {
-        if (!_text)
-        {
-            std::cerr << "No text found" << std::endl;
-            return {};
-        }
-
-        std::vector<std::vector<std::pair<int, std::string>>> titles;
-        // Each line is like.
-        // 5       1       1       1       1       2       201     255     240
-        // 77      96      Malavoglia
-        int a, b, c, d, e, f, g, h, i, j, word_score{};
-
-        // We only want the good words (say confidence > 90)
-        std::stringstream ss(_text);
-        std::vector<std::pair<int, std::string>> line;
-        while (ss >> a >> b >> c >> d >> e >> f >> g >> h >> i >> j >>
-               word_score)
-        {
-            if (word_score != -1)
-            {
-                std::string word;
-                ss >> word;
-                line.push_back(std::make_pair(word_score, word));
-            }
-            else
-            {
-                // New Line
-                const float average = math::average(
-                    line.cbegin(), line.cend(), [](float sum, auto& item) {
-                        return sum + item.first;
-                    });
-                if (average > 85)
-                {
-                    titles.push_back(line);
-                }
-                line.clear();
-            }
-        }
-
-        return titles;
-    }
-
-private:
-    const char* const _text;
-};
 
 int main()
 {
-    VideoWindow win(0, "exShelf");
+    // Hardcoded conf
+    const float NMSConf = 0.4f;
+    const int rescaleWidth = 2 * 320;  // Must be multiple of 32
+    const int rescaleHeight = 2 * 320; // Must be multiple of 32
 
     // Tesseract setup
     tesseract::TessBaseAPI ocr;
@@ -214,11 +32,19 @@ int main()
     // Change is to the appropriate language
     ocr.Init(nullptr, "ita", tesseract::OEM_LSTM_ONLY);
 
+    ocr.SetPageSegMode(tesseract::PSM_AUTO);
+
     Library lib;
 
-    while (true)
+    bool keep_looping{true};
+
+    // Text detection model: https://github.com/argman/EAST
+    // https://www.dropbox.com/s/r2ingd0l3zt8hxs/frozen_east_text_detection.tar.gz?dl=1
+    cv::dnn::Net detector = cv::dnn::readNet("frozen_east_text_detection.pb");
+
+    while (keep_looping)
     {
-        cv::Mat frame = win.getFrame();
+        cv::Mat frame = cv::imread("shelfTest2.jpg", cv::IMREAD_COLOR);
 
         // If the frame is empty, continue
         if (frame.empty())
@@ -228,21 +54,180 @@ int main()
             continue;
         }
 
-        // Display the resulting frame
-        cv::bitwise_not(frame, frame);
-        cv::imshow(win.getWindowName(), frame);
+        cv::rotate(frame, frame, cv::ROTATE_90_CLOCKWISE);
+        const double scale =
+            static_cast<double>(1000) / static_cast<double>(frame.size().width);
+        cv::resize(frame, frame, cv::Size(), scale, scale, cv::INTER_LANCZOS4);
 
-        ocr.SetImage(frame.data, frame.cols, frame.rows, 3, frame.step);
-        ocr.SetSourceResolution(300);
+        // Turns out straightening is not necessarily improving detection.s
+        // frame = opencv_utils::straighten(frame);
 
-        OCRText outOCR(ocr.GetTSVText(0));
+        opencv_utils::displayMat(frame, "ExShelf");
 
-        const std::vector<std::vector<std::pair<int, std::string>>> books =
-            outOCR.getBooks();
-        //        std::cout << "books size " << books.size() << std::endl;
-        for (auto& title : books)
+        cv::Mat blob =
+            cv::dnn::blobFromImage(frame,
+                                   1.0,
+                                   cv::Size(rescaleWidth, rescaleHeight),
+                                   cv::Scalar(123.68, 116.78, 103.94),
+                                   true,
+                                   false);
+
         {
-            lib.insert(BookTitle(title));
+            // Debug, display hte blob
+            // cv::Mat green(
+            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0, 1));
+            // cv::Mat red(
+            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0, 2));
+            // cv::Mat blue(
+            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0, 0));
+
+            // std::vector<cv::Mat> blobChannels{blue, green, red};
+            // cv::Mat blobRGB;
+            // cv::merge(blobChannels, blobRGB);
+            // opencv_utils::displayMat(blobRGB, "blob");
+        }
+
+        detector.setInput(blob);
+        std::vector<cv::Mat> outs;
+        const std::vector<cv::String> outNames(
+            {"feature_fusion/Conv_7/Sigmoid", "feature_fusion/concat_3"});
+
+        detector.forward(outs, outNames);
+
+        cv::Mat scores = outs[0];
+        cv::Mat geometry = outs[1];
+
+        const float confThreshold = 0.1f;
+
+        auto [boxes, confidences] =
+            opencv_utils::decodeBoundingBoxes(scores, geometry, confThreshold);
+
+        std::vector<int> nonSuppressedIndices;
+        cv::dnn::NMSBoxes(
+            boxes, confidences, confThreshold, NMSConf, nonSuppressedIndices);
+
+        cv::Point2f ratio(static_cast<float>(frame.cols) / rescaleWidth,
+                          static_cast<float>(frame.rows) / rescaleHeight);
+
+        std::vector<cv::Rect> nonSuppressedBoxes;
+        for (int index : nonSuppressedIndices)
+        {
+            const cv::RotatedRect& box = boxes[static_cast<size_t>(index)];
+
+            // Get the vertices
+            std::array<cv::Point2f, 4> boxVertices{};
+            box.points(boxVertices.data());
+            for (cv::Point2f& vertex : boxVertices)
+            {
+                vertex.x *= ratio.x;
+                vertex.y *= ratio.y;
+            }
+
+            nonSuppressedBoxes.emplace_back(boxVertices[1], boxVertices[3]);
+        }
+
+        // DEBUG: Display word rectangles
+        {
+            // DEBUG: display the box
+            cv::Mat copy = frame.clone();
+            const cv::Scalar color = cv::Scalar(100, 255, 100);
+
+            for (const auto& rect : nonSuppressedBoxes)
+            {
+                cv::rectangle(copy, rect, color, 3);
+            }
+            opencv_utils::displayMat(copy, "words");
+        }
+
+        // Joine the nearby words into titles
+        std::vector<cv::Rect> joinedRects =
+            opencv_utils::joinAlignedRects(nonSuppressedBoxes);
+
+        // DEBUG
+        cv::Mat copy = frame.clone();
+        for (const auto& rect : joinedRects)
+        {
+            static const cv::Scalar color = cv::Scalar(100, 255, 100);
+            cv::rectangle(copy, rect, color, 3);
+        }
+        opencv_utils::displayMat(copy, "joinedTitles");
+
+        const auto scanFrameForTitles = [&ocr](const cv::Mat& frame_) {
+            ocr.SetImage(frame_.data,
+                         frame_.cols,
+                         frame_.rows,
+                         3,
+                         static_cast<int>(frame_.step));
+            ocr.SetSourceResolution(300);
+
+            // Remove
+            std::cout << "full text " << ocr.GetUTF8Text() << std::endl;
+            return ocrTextUtils::getBooks(ocr.GetUNLVText(),
+                                          ocr.AllWordConfidences());
+        };
+        (void)scanFrameForTitles;
+
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+
+        for (auto& bounding_box : joinedRects)
+        {
+            cv::Mat crop;
+
+            // Add some padding
+            const double padding_percent = 0.05;
+            bounding_box.width += bounding_box.width * padding_percent;
+            bounding_box.height += bounding_box.height * padding_percent;
+            bounding_box.x -= bounding_box.width * padding_percent / 2;
+            bounding_box.y -= bounding_box.height * padding_percent / 2;
+
+            frame(bounding_box).copyTo(crop);
+
+            crop = opencv_utils::straighten(crop);
+
+            for (int i = 0; i < 4; ++i)
+            {
+                cv::rotate(crop, crop, cv::ROTATE_90_CLOCKWISE);
+
+                // Test Threshold
+                {
+                    // const double thresh = 100;
+                    // const double maxValue = 255;
+                    // Binary Threshold
+                    // cv::threshold(
+                       // crop, crop, thresh, maxValue, cv::THRESH_TRIANGLE);
+                }
+
+                cv::adaptiveThreshold(crop,
+                                      crop,
+                                      255,
+                                      cv::ADAPTIVE_THRESH_GAUSSIAN_C,
+                                      cv::THRESH_BINARY,
+                                      11,
+                                      12);
+
+                for (int j = 0; j < 2; ++j)
+                {
+                    cv::bitwise_not(crop, crop);
+
+                    // Debug dump titles
+                    // static size_t z{};
+                    // if (z < joinedRects.size())
+                    // {
+                    //    cv::imwrite("delete/" + std::to_string(z++) + ".jpg",
+                    //                crop);
+                    // }
+
+                    cv::cvtColor(crop, crop, cv::COLOR_GRAY2BGR);
+
+                    const std::vector<std::pair<std::string, float>> books =
+                        scanFrameForTitles(crop);
+
+                    for (auto& title : books)
+                    {
+                        lib.insert(BookTitle(title.first, title.second));
+                    }
+                }
+            }
         }
 
         auto titles = lib.getTitles();
@@ -253,12 +238,10 @@ int main()
         }
 
         std::cout << std::endl << std::endl;
-
-        // Press  ESC on keyboard to  exit
         const char c = static_cast<char>(cv::waitKey(1));
         if (c == 27)
         {
-            break;
+            keep_looping = false;
         }
     }
 

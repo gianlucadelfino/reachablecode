@@ -12,7 +12,7 @@ find_package(PkgConfig REQUIRED)
 find_package(Threads)
 
 # OpenCv
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}")
 # Tesseract
@@ -21,9 +21,10 @@ find_package(Tesseract REQUIRED)
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "${CMAKE_SOURCE_DIR}/../3rdParties")
 
+set(LOCAL_INCLUDE "include")
+
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
-
 
 set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
 
@@ -36,8 +37,9 @@ set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv")
 # We use clang to be able to backlist some sanitizers errors from
 # libfontconfig
 set(CMAKE_CXX_COMPILER /usr/bin/clang)
-set(GCC_DIALECT_FLAGS "-std=c++17")
-seT(CLANG_LINK_LIBS "stdc++" "ubsan")
+set(CLANG_LINK_LIBS "stdc++" "ubsan")
+set(MATH_LIBS "m")
+set (CMAKE_CXX_STANDARD 17)
 
 # Change this for release
 set(CMAKE_BUILD_TYPE "debug")
@@ -50,10 +52,14 @@ elseif(CMAKE_BUILD_TYPE MATCHES "[Pp][Rr][Oo][Ff][Ii][Ll][Ee]")
     set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} -O1 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
 endif()
 
+
+configure_file(res/shelfTest2_reduced.jpg shelfTest2_reduced.jpg COPYONLY)
+
+
 set(SRCS src/main.cpp)
 
 add_executable(exshelf ${SRCS} ${HDRS})
 
-target_link_libraries(exshelf ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${TESSERACT_LIBRARIES})
+target_link_libraries(exshelf ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
-include_directories(SYSTEM ${3RD_PARTIES_INCLUDE} ${TESSERACT_INCLUDE_DIR} ${COMMON_INCLUDE})
+include_directories(SYSTEM ${LOCAL_INCLUDE} ${3RD_PARTIES_INCLUDE} ${TESSERACT_INCLUDE_DIR} ${COMMON_INCLUDE})
