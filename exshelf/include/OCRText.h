@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Math.h"
 #include "Logger.h"
+#include "Math.h"
 
 #include <memory>
 #include <vector>
@@ -57,7 +57,7 @@ inline std::vector<std::pair<std::string, float>> getBooks(
             }
         }
 
-        if (word == "~" or *(confidence+1)==-1)
+        if (word == "~" or *(confidence + 1) == -1)
         {
             // New Line
             if (!word_scores.empty())
@@ -67,7 +67,8 @@ inline std::vector<std::pair<std::string, float>> getBooks(
                 const auto min_score =
                     std::min_element(word_scores.cbegin(), word_scores.cend());
 
-                Logger::Debug("line", line, "average:", average, "min:", *min_score);
+                Logger::Debug(
+                    "line", line, "average:", average, "min:", *min_score);
                 if (*min_score > conf_threshold and average > 60)
                 {
                     titles.emplace_back(

@@ -2,9 +2,9 @@
 
 #include "opencv2/opencv.hpp"
 
+#include "Logger.h"
 #include "Math.h"
 #include "VideoWindow.h"
-#include "Logger.h"
 
 namespace opencv_utils
 {
@@ -305,7 +305,6 @@ std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
     {
         joinedAlignedRects.push_back(cv::boundingRect(cluster));
     }
-
 
     return joinedAlignedRects;
 }
