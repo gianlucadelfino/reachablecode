@@ -52,9 +52,7 @@ elseif(CMAKE_BUILD_TYPE MATCHES "[Pp][Rr][Oo][Ff][Ii][Ll][Ee]")
     set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} -O1 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
 endif()
 
-
-configure_file(res/shelfTest2_reduced.jpg shelfTest2_reduced.jpg COPYONLY)
-
+configure_file(res/shelfTest2_small.jpg shelfTest2_small.jpg COPYONLY)
 
 set(SRCS src/main.cpp)
 
