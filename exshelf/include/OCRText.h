@@ -6,19 +6,6 @@
 #include <memory>
 #include <vector>
 
-template <typename T> struct ArrayDeleter
-{
-    // Not explicit!
-    ArrayDeleter(T* t) : _data(t) {}
-
-    ~ArrayDeleter() { delete[] _data; }
-
-    T* get() const { return _data; }
-
-private:
-    T* const _data;
-};
-
 namespace ocrTextUtils
 {
 
@@ -36,7 +23,7 @@ inline bool is_word_valid(const std::string& word)
 }
 
 inline std::vector<std::pair<std::string, float>> getBooks(
-    ArrayDeleter<char> UNLVText_, ArrayDeleter<int> confidences_)
+    std::unique_ptr<char[]> UNLVText_, std::unique_ptr<int[]> confidences_)
 {
     // Parsing the text. Empty lines are ~
     std::stringstream ss(UNLVText_.get());

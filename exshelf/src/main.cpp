@@ -174,8 +174,8 @@ int main()
             // Debug
             Logger::Debug("full detected text: ", ocr.GetUTF8Text());
 
-            return ocrTextUtils::getBooks(ocr.GetUNLVText(),
-                                          ocr.AllWordConfidences());
+            return ocrTextUtils::getBooks(std::unique_ptr<char[]>(ocr.GetUNLVText()),
+                                          std::unique_ptr<int[]>(ocr.AllWordConfidences()));
         };
 
         cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
