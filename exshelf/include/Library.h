@@ -1,8 +1,10 @@
 #pragma once
 
-#include <vector>
 #include <iostream>
 #include <map>
+#include <vector>
+
+#include "Logger.h"
 
 struct BookTitle
 {
@@ -39,18 +41,18 @@ struct BookTitle
             if (iter != _signature.cend())
             {
                 score += std::min(other_._signature.at(c), iter->second);
-                //                std::cout << "found " << c << " adding " <<
-                //                std::min(other_._signature.at(c),
-                //                iter->second)
-                //                          << std::endl;
+                Logger::Debug("Found ",
+                              c,
+                              "adding",
+                              std::min(other_._signature.at(c), iter->second));
             }
         }
 
         const float final_score =
             2 * score /
             static_cast<float>(_title.size() + other_._title.size());
-        std::cout << "\tChecking " << other_._title << " vs " << _title << " "
-                  << final_score << std::endl;
+        Logger::Debug(
+            "\tChecking ", other_._title, " vs ", _title, final_score);
 
         // let's say 70%
         return final_score > .7f;
@@ -77,27 +79,25 @@ public:
             {
                 if (new_book_.score() > book.score())
                 {
-                    // DEBUG
-                    std::cout << "\tFound same book, replace "
-                              << new_book_.getTitle() << std::endl;
+                    Logger::Debug("\tFound same book, replace",
+                                  new_book_.getTitle());
                     book = std::move(new_book_);
                 }
                 else
                 {
-                    std::cout << "\tFound same book, don't replace "
-                              << new_book_.getTitle() << std::endl;
+                    Logger::Debug("\tFound same book, don't replace",
+                                  new_book_.getTitle());
                 }
                 return;
             }
             else
             {
-                std::cout << "DIDN NOT MATCH\n";
+                Logger::Debug("\tBook didn't match");
             }
         }
 
-        // DEBUG
-        std::cout << "\tBook not found in library, just add: "
-                  << new_book_.getTitle() << std::endl;
+        Logger::Debug("\tBook not found in library, just add:",
+                      new_book_.getTitle());
         // Not found. Just add
         _books.emplace_back(std::move(new_book_));
     }

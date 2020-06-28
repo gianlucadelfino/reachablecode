@@ -18,6 +18,7 @@
 #include "OCRText.h"
 #include "OpenCVUtils.h"
 #include "VideoWindow.h"
+#include "Logger.h"
 
 int main()
 {
@@ -32,9 +33,13 @@ int main()
     // Change is to the appropriate language
     ocr.Init(nullptr, "ita", tesseract::OEM_LSTM_ONLY);
 
-    ocr.SetPageSegMode(tesseract::PSM_AUTO);
+    ocr.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
 
     Library lib;
+
+    // Optional webcam input
+    // VideoWindow v(0, "webcam");
+    // v.setFPS(1);
 
     bool keep_looping{true};
 
@@ -44,25 +49,28 @@ int main()
 
     while (keep_looping)
     {
-        cv::Mat frame = cv::imread("shelfTest2.jpg", cv::IMREAD_COLOR);
+        // Optional webcam input
+        // cv::Mat frame = v.getFrame();
+        cv::Mat frame = cv::imread(
+            "../res/shelfTest2_small.jpg");
 
         // If the frame is empty, continue
         if (frame.empty())
         {
-            std::cerr << "Emtpy frame";
+            Logger::Error("Emtpy frame");
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
 
-        cv::rotate(frame, frame, cv::ROTATE_90_CLOCKWISE);
         const double scale =
             static_cast<double>(1000) / static_cast<double>(frame.size().width);
         cv::resize(frame, frame, cv::Size(), scale, scale, cv::INTER_LANCZOS4);
 
-        // Turns out straightening is not necessarily improving detection.s
-        // frame = opencv_utils::straighten(frame);
-
         opencv_utils::displayMat(frame, "ExShelf");
+
+        // Adjust this depending on oriantation of input, or rotate it around
+        // 4 times to try all orientations
+        cv::rotate(frame, frame, cv::ROTATE_90_CLOCKWISE);
 
         cv::Mat blob =
             cv::dnn::blobFromImage(frame,
@@ -75,11 +83,14 @@ int main()
         {
             // Debug, display hte blob
             // cv::Mat green(
-            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0, 1));
+            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0,
+            //    1));
             // cv::Mat red(
-            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0, 2));
+            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0,
+            //    2));
             // cv::Mat blue(
-            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0, 0));
+            //    rescaleHeight, rescaleWidth, CV_32F, blob.ptr<float>(0,
+            //    0));
 
             // std::vector<cv::Mat> blobChannels{blue, green, red};
             // cv::Mat blobRGB;
@@ -156,16 +167,16 @@ int main()
             ocr.SetImage(frame_.data,
                          frame_.cols,
                          frame_.rows,
-                         3,
+                         frame_.channels(),
                          static_cast<int>(frame_.step));
             ocr.SetSourceResolution(300);
 
-            // Remove
-            std::cout << "full text " << ocr.GetUTF8Text() << std::endl;
+            // Debug
+            Logger::Debug("full detected text: ", ocr.GetUTF8Text());
+
             return ocrTextUtils::getBooks(ocr.GetUNLVText(),
                                           ocr.AllWordConfidences());
         };
-        (void)scanFrameForTitles;
 
         cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
 
@@ -174,71 +185,54 @@ int main()
             cv::Mat crop;
 
             // Add some padding
-            const double padding_percent = 0.05;
-            bounding_box.width += bounding_box.width * padding_percent;
-            bounding_box.height += bounding_box.height * padding_percent;
-            bounding_box.x -= bounding_box.width * padding_percent / 2;
-            bounding_box.y -= bounding_box.height * padding_percent / 2;
+            const float padding_percent = 0.2f;
+            bounding_box.width +=
+                static_cast<float>(bounding_box.width) * padding_percent;
+            bounding_box.height +=
+                static_cast<float>(bounding_box.height) * padding_percent;
+            bounding_box.x -=
+                static_cast<float>(bounding_box.width) * padding_percent / 2;
+            bounding_box.y -=
+                static_cast<float>(bounding_box.height) * padding_percent / 2;
+
+            // Fix outbound issues
+            bounding_box.x = std::max(bounding_box.x, 0);
+            bounding_box.y = std::max(bounding_box.y, 0);
+            if (bounding_box.x + bounding_box.width >= frame.size().width)
+            {
+                bounding_box.width = frame.size().width - bounding_box.x;
+            }
+            if (bounding_box.y + bounding_box.height >= frame.size().height)
+            {
+                bounding_box.height = frame.size().height - bounding_box.y;
+            }
 
             frame(bounding_box).copyTo(crop);
 
             crop = opencv_utils::straighten(crop);
 
-            for (int i = 0; i < 4; ++i)
+            for (int j = 0; j < 2; ++j)
             {
-                cv::rotate(crop, crop, cv::ROTATE_90_CLOCKWISE);
+                cv::bitwise_not(crop, crop);
 
-                // Test Threshold
+                const std::vector<std::pair<std::string, float>> books =
+                    scanFrameForTitles(crop);
+
+                for (auto& title : books)
                 {
-                    // const double thresh = 100;
-                    // const double maxValue = 255;
-                    // Binary Threshold
-                    // cv::threshold(
-                       // crop, crop, thresh, maxValue, cv::THRESH_TRIANGLE);
-                }
-
-                cv::adaptiveThreshold(crop,
-                                      crop,
-                                      255,
-                                      cv::ADAPTIVE_THRESH_GAUSSIAN_C,
-                                      cv::THRESH_BINARY,
-                                      11,
-                                      12);
-
-                for (int j = 0; j < 2; ++j)
-                {
-                    cv::bitwise_not(crop, crop);
-
-                    // Debug dump titles
-                    // static size_t z{};
-                    // if (z < joinedRects.size())
-                    // {
-                    //    cv::imwrite("delete/" + std::to_string(z++) + ".jpg",
-                    //                crop);
-                    // }
-
-                    cv::cvtColor(crop, crop, cv::COLOR_GRAY2BGR);
-
-                    const std::vector<std::pair<std::string, float>> books =
-                        scanFrameForTitles(crop);
-
-                    for (auto& title : books)
-                    {
-                        lib.insert(BookTitle(title.first, title.second));
-                    }
+                    lib.insert(BookTitle(title.first, title.second));
                 }
             }
         }
 
         auto titles = lib.getTitles();
-        std::cout << "\nNum titles " << titles.size() << std::endl;
+        Logger::Info("Num titles", titles.size());
         for (auto& title : titles)
         {
-            std::cout << title << std::endl;
+            Logger::Info(title);
         }
 
-        std::cout << std::endl << std::endl;
-        const char c = static_cast<char>(cv::waitKey(1));
+        const char c = static_cast<char>(cv::waitKey(10));
         if (c == 27)
         {
             keep_looping = false;

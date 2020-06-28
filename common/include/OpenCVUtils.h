@@ -4,6 +4,7 @@
 
 #include "Math.h"
 #include "VideoWindow.h"
+#include "Logger.h"
 
 namespace opencv_utils
 {
@@ -240,8 +241,7 @@ cv::Mat straighten(cv::Mat frame)
         return -angle;
     }();
 
-    // Debug
-    // std::cout << "Angle " << adjusted_angle << std::endl;
+    Logger::Debug("Angle ", adjusted_angle);
 
     cv::Point2f axis(frame.cols / 2.f, frame.rows / 2.f);
     cv::Mat rot = cv::getRotationMatrix2D(axis, adjusted_angle, 1.0);
@@ -284,6 +284,7 @@ std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
     float last_y = sorted_rects.front().y;
     float last_height = sorted_rects.front().height;
     std::vector<cv::Point> cluster;
+
     for (const auto& rect : sorted_rects)
     {
         if (rect.y > (last_y + last_height / 2) or
@@ -298,6 +299,13 @@ std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
         last_y = rect.y;
         last_height = rect.height;
     }
+
+    // Check if there is something left in cluster
+    if (!cluster.empty())
+    {
+        joinedAlignedRects.push_back(cv::boundingRect(cluster));
+    }
+
 
     return joinedAlignedRects;
 }

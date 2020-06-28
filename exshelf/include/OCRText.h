@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Math.h"
+#include "Logger.h"
+
 #include <memory>
 #include <vector>
 
@@ -49,23 +51,17 @@ inline std::vector<std::pair<std::string, float>> getBooks(
 
     std::vector<int> word_scores;
     std::string line;
-    std::cout << "NEW TExt\n";
 
-    while (true)
+    const int conf_threshold = 20;
+
+    while (confidence && *confidence && *confidence != -1)
     {
         ss >> word;
-        std::cout << "word " << word << " conf " << *confidence << std::endl;
+        assert(*confidence < 100);
 
-        if (word.find("veraa") != std::string::npos)
-        {
-            std::cout << "vera" << std::endl;
-        }
+        Logger::Debug("word", word, "conf", *confidence);
 
-        if (*confidence > 100)
-        {
-            assert(false);
-        }
-        if (word != "~" and *confidence > 80)
+        if (word != "~" and *confidence > conf_threshold)
         {
             if (is_word_valid(word))
             {
@@ -74,7 +70,7 @@ inline std::vector<std::pair<std::string, float>> getBooks(
             }
         }
 
-        if (word == "~")
+        if (word == "~" or *(confidence+1)==-1)
         {
             // New Line
             if (!word_scores.empty())
@@ -83,7 +79,9 @@ inline std::vector<std::pair<std::string, float>> getBooks(
                     math::average(word_scores.cbegin(), word_scores.cend());
                 const auto min_score =
                     std::min_element(word_scores.cbegin(), word_scores.cend());
-                if (*min_score > 80 and average > 90)
+
+                Logger::Debug("line", line, "average:", average, "min:", *min_score);
+                if (*min_score > conf_threshold and average > 60)
                 {
                     titles.emplace_back(
                         std::make_pair(std::move(line), average));
@@ -93,10 +91,6 @@ inline std::vector<std::pair<std::string, float>> getBooks(
             word_scores.clear();
         }
 
-        if (*confidence == -1)
-        {
-            break;
-        }
         ++confidence;
     }
 
