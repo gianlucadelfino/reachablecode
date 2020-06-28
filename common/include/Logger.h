@@ -27,7 +27,7 @@ public:
     static void SetLevel(Level l) { Instance().level = l; }
 
     template <typename First, typename... Args>
-    static void Debug(First& first, Args&&... args)
+    static void Debug(First&& first, Args&&... args)
     {
         if (Level::DEBUG >= Instance().level)
         {
@@ -37,7 +37,7 @@ public:
     }
 
     template <typename First, typename... Args>
-    static void Info(First& first, Args&&... args)
+    static void Info(First&& first, Args&&... args)
     {
         if (Level::INFO >= Instance().level)
         {
@@ -47,7 +47,7 @@ public:
     }
 
     template <typename First, typename... Args>
-    static void Warning(First& first, Args&&... args)
+    static void Warning(First&& first, Args&&... args)
     {
         if (Level::WARNING >= Instance().level)
         {
@@ -57,7 +57,7 @@ public:
     }
 
     template <typename First, typename... Args>
-    static void Error(First& first, Args&&... args)
+    static void Error(First&& first, Args&&... args)
     {
         if (Level::ERROR >= Instance().level)
         {
@@ -84,7 +84,7 @@ private:
     }
 
     template <typename First, typename... Args>
-    static void InfoHelper(First& first, Args&&... args)
+    static void InfoHelper(First&& first, Args&&... args)
     {
         std::cout << first;
 
@@ -100,7 +100,7 @@ private:
     }
 
     template <typename First, typename... Args>
-    static void WarningHelper(First& first, Args&&... args)
+    static void WarningHelper(First&& first, Args&&... args)
     {
         std::cout << first;
 
@@ -116,7 +116,7 @@ private:
     }
 
     template <typename First, typename... Args>
-    static void ErrorHelper(First& first, Args&&... args)
+    static void ErrorHelper(First&& first, Args&&... args)
     {
         std::cerr << first;
 
