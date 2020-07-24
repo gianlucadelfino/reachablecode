@@ -20,7 +20,7 @@ set(3RD_PARTIES_INCLUDE "../3rdParties")
 set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
 
 # ftrapv checks for overflow and crashes the program if it happens.
-set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv")
+set(GCC_DEBUG_FLAGS " -O0 -g -ftrapv")
 
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
@@ -31,14 +31,12 @@ configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
 set(GCC_SANITIZE_FLAGS "-fsanitize=undefined,address")
 set(LSAN_OPTIONS "verbosity=1:log_threads=1")
 
-# We use clang to be able to backlist some sanitizers errors from
-# libfontconfig
-set(CMAKE_CXX_COMPILER /usr/bin/clang)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+set(CLANG_LINK_LIBS "stdc++" "ubsan")
 set(GCC_DIALECT_FLAGS "-std=c++17")
-seT(CLANG_LINK_LIBS "stdc++" "ubsan")
 
 # Change this for release
-set(CMAKE_BUILD_TYPE "debug")
+set(CMAKE_BUILD_TYPE "release")
 
 if(CMAKE_BUILD_TYPE MATCHES "[Rr][Ee][Ll][Ee][Aa][Ss][Ee]")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
@@ -52,6 +50,6 @@ set(SRCS src/main.cpp)
 
 add_executable(cUDP ${SRCS} ${HDRS})
 
-target_link_libraries(cUDP ${OpenCV_LIBS} ${CLANG_LINK_LIBS})
+target_link_libraries(cUDP ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 include_directories(SYSTEM ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
