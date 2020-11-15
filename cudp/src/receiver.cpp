@@ -13,83 +13,7 @@
 #include "OpenCVUtils.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
-
-const int MB = 1024 * 1024;
-
-std::vector<uchar> global_test_buffer;
-
-struct InputBuffer
-{
-  constexpr static int64_t MTU = 1500;
-
-  InputBuffer() = default;
-  InputBuffer(const InputBuffer&) = default;
-
-  InputBuffer(InputBuffer&&) = default;
-
-  InputBuffer& operator=(InputBuffer&&) = default;
-
-  struct Header
-  {
-    int32_t frame_id{};
-    int32_t part_begin{};
-    int16_t part_id{};
-    int16_t total_parts{};
-    int32_t part_size{};
-
-    friend std::ostream& operator<<(std::ostream& o, const Header& h)
-    {
-      o << "Frame id: " << h.frame_id << ", part num: " << h.part_id
-        << ", part begin: " << h.part_begin;
-      return o;
-    }
-  };
-
-  Header get_header() const
-  {
-    Header h{};
-    memcpy(&h, _recv_buff.data(), sizeof(h));
-    return h;
-  }
-
-  std::pair<Header, ::asio::const_buffer> parse() const
-  {
-    Header h = get_header();
-    return std::make_pair(h, get_frame_part(h.part_size));
-  }
-
-  static size_t size() { return MTU; }
-
-  void set_header(const Header& h_)
-  {
-    memcpy(_recv_buff.data(), &h_, sizeof(h_));
-  }
-
-  void set_frame_part(::asio::const_buffer buf_)
-  {
-    assert(buf_.size() <= writable_size());
-    memcpy(_recv_buff.data() + sizeof(Header), buf_.data(), buf_.size());
-  }
-
-  static size_t writable_size() { return MTU - sizeof(Header); }
-
-  ::asio::mutable_buffer data()
-  {
-    return ::asio::mutable_buffer(_recv_buff.data(), _recv_buff.size());
-  }
-
-  ::asio::const_buffer buffer() const
-  {
-    return ::asio::const_buffer(_recv_buff.data(), _recv_buff.size());
-  }
-
-  private:
-  ::asio::const_buffer get_frame_part(size_t part_size_) const
-  {
-    return ::asio::const_buffer(_recv_buff.data() + sizeof(Header), part_size_);
-  }
-  std::array<char, MTU> _recv_buff{0};
-};
+#include "InputBuffer.h"
 
 struct FrameStitcher
 {
@@ -107,7 +31,6 @@ struct FrameStitcher
 
     memcpy(_image_buffer.data() + h_.part_begin, part_.data(), part_.size());
     _parts_num--;
-    std::cout << "parts num " << _parts_num << std::endl;
   }
 
   bool is_complete() const { return _parts_num == 0; }
@@ -115,17 +38,6 @@ struct FrameStitcher
   cv::Mat decoded() const
   {
     assert(is_complete());
-
-//    std::cout <<"CHECKING BUFFER " << _image_buffer.size() << " vs " << global_test_buffer.size() << std::endl;
-//    for (size_t i =0; i < 50; ++i)
-    {
-//        if (_image_buffer[i] != global_test_buffer[i])
-//        {
-//            std::cout << "Found diff " << i << std::endl;
-//            break;;
-//        }
-    }
-
     return cv::imdecode(_image_buffer, cv::IMREAD_UNCHANGED);
   }
 
@@ -187,6 +99,7 @@ struct FramesManager
   {
     assert(_last_complete_frame > -1);
     FrameStitcher frame_stitcher = std::move(_frames.at(_last_complete_frame));
+    Logger::Debug("Decoded frame", _last_complete_frame);
     _last_complete_frame = -1;
     return frame_stitcher.decoded();
   }
@@ -257,7 +170,6 @@ void receiver()
 
           _socket.async_receive(_input_buffer.data(), *this);
         }
-        //              cv::waitKey(1);
       }
 
   private:
@@ -276,7 +188,6 @@ void receiver()
         {
           static FramesManager frame_manager;
           static cv::Mat frame;
-          //          TimeLogger t("Recv part", std::cout);
 
           InputBuffer part_buf;
           while (disruptor.try_pop(part_buf))
@@ -290,23 +201,20 @@ void receiver()
             {
               Logger::Debug("Updating Frame");
               frame = frame_manager.get_last_frame();
-              std::cout << "UPDATED FRAME" << std::endl;
             }
           }
 
-          std::cout << "is frame empty? " << frame.empty() << std::endl;
           if (!frame.empty())
           {
-            std::cout << "displaying frame" << std::endl;
             opencv_utils::displayMat(frame, "recv");
           }
 
           // Press  ESC on keyboard to  exit
-//          const char c = static_cast<char>(cv::waitKey(1));
+          const char c = static_cast<char>(cv::waitKey(1));
           std::this_thread::sleep_for(std::chrono::milliseconds(16));
-//          if (c == 27)
+          if (c == 27)
           {
-//            break;
+            break;
           }
         }
       }
@@ -316,6 +224,9 @@ void receiver()
       }
     });
 
+    Logger::Info("Waiting for connections on",
+                 recv_endpoint.address().to_string(),
+                 recv_endpoint.port());
     ioContext.run();
     if (display_frame_thread.joinable())
     {
@@ -328,114 +239,9 @@ void receiver()
   }
 }
 
-void sender()
-{
-  try
-  {
-    ::asio::io_context ioContext;
-
-    ::asio::ip::udp::resolver resolver(ioContext);
-
-    ::asio::ip::udp::socket sender_socket(ioContext);
-
-    sender_socket.open(::asio::ip::udp::v4());
-
-    const std::string recv_address("0.0.0.0");
-    const int recv_port = 39009;
-    ::asio::ip::udp::endpoint recv_endpoint(
-        ::asio::ip::address::from_string(recv_address), recv_port);
-
-    VideoWindow win(1, "cUDP");
-    std::vector<int> compression_params;
-    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-
-    // TODO: make this dynamic?
-    compression_params.push_back(
-        50); // that's percent, so 100 == no compression
-
-    std::vector<uchar> buffer(20 * MB);
-
-    while (true)
-    {
-      cv::Mat frame = // cv::imread("/home/gianluca/dev/cppfiddler/exshelf/build/shelfTest2_small.jpg", cv::IMREAD_COLOR);
-
-       win.getFrame();
-      // If the frame is empty, break immediately
-      if (frame.empty())
-      {
-        std::cerr << "Emtpy frame";
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        continue;
-      }
-
-      static int frame_id = 0;
-
-      {
-        TimeLogger t("Encoding frame", std::cout);
-        cv::imencode(".jpg", frame, buffer, compression_params);
-        global_test_buffer = buffer; // REMOVE
-      }
-
-      std::cout << "buf size " << buffer.size() << std::endl;
-      frame_id++;
-
-      const int16_t parts_num =
-          (buffer.size() + InputBuffer::writable_size() - 1) /
-          InputBuffer::writable_size();
-      for (int16_t part_id = 0; part_id < parts_num; ++part_id)
-      {
-        InputBuffer::Header h;
-        h.part_id = part_id;
-        h.total_parts = parts_num;
-        // Size is either MTU or the remainder for the last part
-        h.frame_id = frame_id;
-        h.part_begin = part_id * InputBuffer::writable_size();
-
-        h.part_size = part_id + 1 == parts_num ?
-                          buffer.size() % InputBuffer::writable_size() :
-                          InputBuffer::writable_size();
-
-        //        Logger::Debug("Part begin", h.part_begin, "Part Size",
-        //        part_size);
-
-        InputBuffer input_buffer;
-        input_buffer.set_header(h);
-        input_buffer.set_frame_part(
-            ::asio::const_buffer(reinterpret_cast<const char*>(buffer.data()) +
-                                     part_id * InputBuffer::writable_size(),
-                                 h.part_size));
-
-        std::error_code err;
-        sender_socket.send_to(input_buffer.buffer(), recv_endpoint, 0, err);
-        if (err)
-        {
-          std::cerr << "ERR sending " << err.message() << std::endl;
-        }
-      }
-
-
-      // Display the resulting frame
-      opencv_utils::displayMat(frame, win.getWindowName());
-
-//      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-      // Press  ESC on keyboard to  exit
-      const char c = static_cast<char>(cv::waitKey(0));
-      if (c == 27)
-      {
-        break;
-      }
-    }
-  }
-  catch (const std::exception& e_)
-  {
-    Logger::Error("Sernder Error: ", e_.what());
-  }
-}
-
 int main(/*int argc, char* argv[]*/)
 {
-  Logger::SetLevel(Logger::DEBUG);
+  Logger::SetLevel(Logger::INFO);
   //    if (argc < 2)
   //    {
   //        std::cerr << "Please add the remote address " << std::endl;
@@ -443,11 +249,7 @@ int main(/*int argc, char* argv[]*/)
   //    }
   //    const std::string recv_address(argv[1]);
 
-  std::thread recv_thread(receiver);
+  receiver();
 
-  sender();
-
-  if (recv_thread.joinable())
-    recv_thread.join();
   return 0;
 }

@@ -36,7 +36,7 @@ set(CLANG_LINK_LIBS "stdc++" "ubsan")
 set(GCC_DIALECT_FLAGS "-std=c++17")
 
 # Change this for release
-set(CMAKE_BUILD_TYPE "release")
+set(CMAKE_BUILD_TYPE "debug")
 
 if(CMAKE_BUILD_TYPE MATCHES "[Rr][Ee][Ll][Ee][Aa][Ss][Ee]")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
@@ -46,10 +46,15 @@ elseif(CMAKE_BUILD_TYPE MATCHES "[Pp][Rr][Oo][Ff][Ii][Ll][Ee]")
     set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} -O1 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
 endif()
 
-set(SRCS src/main.cpp)
+set(SRCSSender src/sender.cpp)
+set(SRCSReceiver src/receiver.cpp)
 
-add_executable(cUDP ${SRCS} ${HDRS})
+add_executable(cUDPsender ${SRCSSender} ${HDRS})
 
-target_link_libraries(cUDP ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+add_executable(cUDPreceiver ${SRCSReceiver} ${HDRS})
 
-include_directories(SYSTEM ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
+
+target_link_libraries(cUDPsender ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(cUDPreceiver ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+
+include_directories(SYSTEM "include" ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
