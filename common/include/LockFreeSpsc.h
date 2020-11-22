@@ -30,7 +30,7 @@ template <typename T> class LockFreeSpsc
     const int cur_reader_idx = _next_read_idx.load(std::memory_order_acquire);
 
     int new_writer_idx = cur_writer_idx + 1;
-    if (new_writer_idx == _ring.size())
+    if (new_writer_idx == static_cast<int>(_ring.size()))
     {
       new_writer_idx = 0;
     }
@@ -59,7 +59,7 @@ template <typename T> class LockFreeSpsc
     }
 
     int new_reader_idx = cur_reader_idx + 1;
-    if (new_reader_idx == _ring.size())
+    if (new_reader_idx ==  static_cast<int>(_ring.size()))
     {
       new_reader_idx = 0;
     }

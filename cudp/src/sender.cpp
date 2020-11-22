@@ -3,19 +3,19 @@
 #include <iostream>
 #include <map>
 #include <thread>
+#include "Logger.h"
 
 #include <asio/buffer.hpp>
 #include <asio/io_context.hpp>
 #include <asio/ip/udp.hpp>
 
 #include "LockFreeSpsc.h"
-#include "Logger.h"
 #include "OpenCVUtils.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
 #include "InputBuffer.h"
 
-void sender()
+void sender(const std::string& recv_address_)
 {
   try
   {
@@ -27,12 +27,11 @@ void sender()
 
     sender_socket.open(::asio::ip::udp::v4());
 
-    const std::string recv_address("0.0.0.0");
     const int recv_port = 39009;
     ::asio::ip::udp::endpoint recv_endpoint(
-        ::asio::ip::address::from_string(recv_address), recv_port);
+        ::asio::ip::address::from_string(recv_address_), recv_port);
 
-    VideoWindow win(1, "cUDP");
+    VideoWindow win(0, "cUDP");
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
 
@@ -44,9 +43,7 @@ void sender()
 
     while (true)
     {
-      cv::Mat frame = // cv::imread("/home/gianluca/dev/cppfiddler/exshelf/build/shelfTest2_small.jpg",
-                      // cv::IMREAD_COLOR);
-          win.getFrame();
+      cv::Mat frame = win.getFrame();
       // If the frame is empty, break immediately
       if (frame.empty())
       {
@@ -114,16 +111,20 @@ void sender()
   }
 }
 
-int main(/*int argc, char* argv[]*/)
+int main(int argc, char* argv[])
 {
   Logger::SetLevel(Logger::INFO);
-  //    if (argc < 2)
-  //    {
-  //        std::cerr << "Please add the remote address " << std::endl;
-  //        return -1;
-  //    }
-  //    const std::string recv_address(argv[1]);
+  std::string recv_address;
+  if (argc < 2)
+  {
+      Logger::Warning("No Address passed, using localhost");
+      recv_address = "127.0.01";
+  }
+  else
+  {
+    recv_address = argv[1];
+  }
 
-  sender();
+  sender(recv_address);
   return 0;
 }

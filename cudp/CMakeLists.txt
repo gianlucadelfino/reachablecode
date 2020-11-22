@@ -5,11 +5,19 @@ project(cUDP)
 # This will display the full g++ command in the output.
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+include(${CMAKE_BINARY_DIR}/conan_paths.cmake OPTIONAL)
+
 # Dipendencies
-find_package(PkgConfig REQUIRED)
+if(!WIN32)
+    find_package(PkgConfig REQUIRED)
+endif()
 
 # pthread
 find_package(Threads)
+
+if(WIN32)
+    set(OpenCV_DIR "C:/OpenCV-4.1.1/")
+endif()
 
 # OpenCv
 find_package(OpenCV REQUIRED)
@@ -25,14 +33,16 @@ set(GCC_DEBUG_FLAGS " -O0 -g -ftrapv")
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
 
-# NB Blacklist for libfontconfig
-configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
+if(WIN32)
+  # NB Blacklist for libfontconfig
+  configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
 
-set(GCC_SANITIZE_FLAGS "-fsanitize=undefined,address")
-set(LSAN_OPTIONS "verbosity=1:log_threads=1")
+  set(LSAN_OPTIONS "verbosity=1:log_threads=1")
+  set(GCC_SANITIZE_FLAGS "-fsanitize=undefined,address")
+  set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+  set(CLANG_LINK_LIBS "stdc++" "ubsan")
+endif()
 
-set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-set(CLANG_LINK_LIBS "stdc++" "ubsan")
 set(GCC_DIALECT_FLAGS "-std=c++17")
 
 # Change this for release
@@ -49,12 +59,18 @@ endif()
 set(SRCSSender src/sender.cpp)
 set(SRCSReceiver src/receiver.cpp)
 
-add_executable(cUDPsender ${SRCSSender} ${HDRS})
+add_executable(cUDPsender ${SRCSSender})
 
-add_executable(cUDPreceiver ${SRCSReceiver} ${HDRS})
+add_executable(cUDPreceiver ${SRCSReceiver})
 
+message(status "LIBS " ${OpenCV_LIBS})
 
-target_link_libraries(cUDPsender ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(cUDPreceiver ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+if(WIN32)
+  set(WINSOCK_LIBS "wsock32;ws2_32")
+  set(WIN_ASIO_INCLUDES "C:/asio-1.18.0/include")
+endif()
 
-include_directories(SYSTEM "include" ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
+target_link_libraries(cUDPsender ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS})
+target_link_libraries(cUDPreceiver ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS})
+
+include_directories(SYSTEM "include" ${WIN_ASIO_INCLUDES} ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})

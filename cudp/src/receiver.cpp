@@ -1,6 +1,6 @@
+ #include <iostream>
 #include "opencv2/opencv.hpp"
 #include <chrono>
-#include <iostream>
 #include <map>
 #include <thread>
 
@@ -8,12 +8,14 @@
 #include <asio/io_context.hpp>
 #include <asio/ip/udp.hpp>
 
-#include "LockFreeSpsc.h"
+
 #include "Logger.h"
 #include "OpenCVUtils.h"
+#include "LockFreeSpsc.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
 #include "InputBuffer.h"
+
 
 struct FrameStitcher
 {
@@ -110,7 +112,7 @@ struct FramesManager
   std::map<int, FrameStitcher> _frames;
 };
 
-void receiver()
+void receiver(const std::string& recv_address_)
 {
   try
   {
@@ -120,12 +122,12 @@ void receiver()
 
     ::asio::ip::udp::socket recv_socket(ioContext);
 
-    const std::string recv_address("0.0.0.0");
     const int recv_port = 39009;
 
     InputBuffer input_buffer;
 
-    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::udp::v4(), recv_port);
+    ::asio::ip::udp::endpoint recv_endpoint(
+      ::asio::ip::address::from_string(recv_address_), recv_port);
 
     recv_socket.open(::asio::ip::udp::v4());
 
@@ -239,17 +241,20 @@ void receiver()
   }
 }
 
-int main(/*int argc, char* argv[]*/)
+int main(int argc, char* argv[])
 {
   Logger::SetLevel(Logger::INFO);
-  //    if (argc < 2)
-  //    {
-  //        std::cerr << "Please add the remote address " << std::endl;
-  //        return -1;
-  //    }
-  //    const std::string recv_address(argv[1]);
+  std::string recv_address;
+  if (argc < 2)
+  {
+      Logger::Warning("No Address passed, using localhost");
+      recv_address = "127.0.0.1";
+  }
+  else
+  {
+    recv_address = argv[1];
+  }
 
-  receiver();
-
+  receiver(recv_address);
   return 0;
 }
