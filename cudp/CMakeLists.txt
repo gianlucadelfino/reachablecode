@@ -63,8 +63,6 @@ add_executable(cUDPsender ${SRCSSender})
 
 add_executable(cUDPreceiver ${SRCSReceiver})
 
-message(status "LIBS " ${OpenCV_LIBS})
-
 if(WIN32)
   set(WINSOCK_LIBS "wsock32;ws2_32")
   set(WIN_ASIO_INCLUDES "C:/asio-1.18.0/include")
