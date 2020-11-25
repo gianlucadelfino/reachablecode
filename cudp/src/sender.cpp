@@ -1,19 +1,19 @@
+#include "Logger.h"
 #include "opencv2/opencv.hpp"
 #include <chrono>
 #include <iostream>
 #include <map>
 #include <thread>
-#include "Logger.h"
 
 #include <asio/buffer.hpp>
 #include <asio/io_context.hpp>
 #include <asio/ip/udp.hpp>
 
+#include "InputBuffer.h"
 #include "LockFreeSpsc.h"
 #include "OpenCVUtils.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
-#include "InputBuffer.h"
 
 void sender(const std::string& recv_address_)
 {
@@ -31,7 +31,7 @@ void sender(const std::string& recv_address_)
     ::asio::ip::udp::endpoint recv_endpoint(
         ::asio::ip::address::from_string(recv_address_), recv_port);
 
-    VideoWindow win(1, "cUDP");
+    VideoWindow win(0, "cUDP");
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
 
@@ -41,8 +41,14 @@ void sender(const std::string& recv_address_)
 
     std::vector<uchar> buffer(20 * MB);
 
+    // Aim for 24 fps
+    const auto ms_per_update =
+        std::chrono::milliseconds(static_cast<int>(1000 / 24.f));
+
     while (true)
     {
+      const auto timepoint_before_compression =
+          std::chrono::system_clock::now();
       cv::Mat frame = win.getFrame();
       // If the frame is empty, break immediately
       if (frame.empty())
@@ -95,7 +101,13 @@ void sender(const std::string& recv_address_)
       // Display the resulting frame
       opencv_utils::displayMat(frame, win.getWindowName());
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000 / 24));
+      const auto timepoint_after_sending = std::chrono::system_clock::now();
+      auto frame_duration =
+          (timepoint_after_sending - timepoint_before_compression);
+      if (frame_duration < ms_per_update)
+      {
+        std::this_thread::sleep_for(ms_per_update - frame_duration);
+      }
 
       // Press  ESC on keyboard to  exit
       const char c = static_cast<char>(cv::waitKey(1));
@@ -117,8 +129,8 @@ int main(int argc, char* argv[])
   std::string recv_address;
   if (argc < 2)
   {
-      Logger::Warning("No Address passed, using localhost");
-      recv_address = "127.0.0.1";
+    Logger::Warning("No Address passed, using localhost");
+    recv_address = "127.0.0.1";
   }
   else
   {
