@@ -14,7 +14,7 @@ public:
         DEBUG = 0,
         INFO,
         WARNING,
-        ERROR
+        ERR
     };
     Level level{Level::INFO};
 
@@ -59,7 +59,7 @@ public:
     template <typename First, typename... Args>
     static void Error(First&& first, Args&&... args)
     {
-        if (Level::ERROR >= Instance().level)
+        if (Level::ERR >= Instance().level)
         {
             std::cerr << "ERROR: ";
             ErrorHelper(first, args...);
