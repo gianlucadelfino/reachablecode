@@ -33,7 +33,7 @@ set(GCC_DEBUG_FLAGS " -O0 -g -ftrapv")
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
 
-if(WIN32)
+if(!WIN32)
   # NB Blacklist for libfontconfig
   configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
 
