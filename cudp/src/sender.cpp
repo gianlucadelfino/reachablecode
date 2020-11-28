@@ -7,6 +7,7 @@
 
 #include <asio/buffer.hpp>
 #include <asio/io_context.hpp>
+#include <asio/ip/host_name.hpp>
 #include <asio/ip/udp.hpp>
 
 #include "InputBuffer.h"
@@ -23,6 +24,19 @@ void sender(const std::string& recv_address_)
 
     ::asio::ip::udp::resolver resolver(ioContext);
 
+    ::asio::ip::udp::resolver::query query(::asio::ip::host_name(), "");
+    //    const auto addr = resolver.resolve(query)->endpoint().address();
+    //    std::cout<<"USing "<< addr.to_string()<<std::endl;
+
+    ::asio::ip::udp::resolver::iterator it = resolver.resolve(query);
+
+    while (it != ::asio::ip::udp::resolver::iterator())
+    {
+      auto addr = (it++)->endpoint().address();
+
+      std::cout << addr.to_string() << std::endl;
+    }
+
     ::asio::ip::udp::socket sender_socket(ioContext);
 
     sender_socket.open(::asio::ip::udp::v4());
@@ -31,7 +45,7 @@ void sender(const std::string& recv_address_)
     ::asio::ip::udp::endpoint recv_endpoint(
         ::asio::ip::address::from_string(recv_address_), recv_port);
 
-    VideoWindow win(0, "cUDP");
+    VideoWindow win(1, "cUDP");
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
 
@@ -67,9 +81,11 @@ void sender(const std::string& recv_address_)
 
       frame_id++;
 
+      Logger::Debug("Frame Size", buffer.size());
       const int16_t parts_num =
           (buffer.size() + InputBuffer::writable_size() - 1) /
           InputBuffer::writable_size();
+      Logger::Debug("Frame id", frame_id, "split in parts", parts_num);
       for (int16_t part_id = 0; part_id < parts_num; ++part_id)
       {
         InputBuffer::Header h;
@@ -88,7 +104,7 @@ void sender(const std::string& recv_address_)
         input_buffer.set_frame_part(
             ::asio::const_buffer(reinterpret_cast<const char*>(buffer.data()) +
                                      part_id * InputBuffer::writable_size(),
-                                 h.part_size));
+                                 InputBuffer::writable_size()));
 
         std::error_code err;
         sender_socket.send_to(input_buffer.buffer(), recv_endpoint, 0, err);
@@ -99,14 +115,21 @@ void sender(const std::string& recv_address_)
       }
 
       // Display the resulting frame
-      opencv_utils::displayMat(frame, win.getWindowName());
+      opencv_utils::displayMat(cv::imdecode(buffer, cv::IMREAD_UNCHANGED),
+                               win.getWindowName());
 
       const auto timepoint_after_sending = std::chrono::system_clock::now();
       auto frame_duration =
           (timepoint_after_sending - timepoint_before_compression);
+
       if (frame_duration < ms_per_update)
       {
-        std::this_thread::sleep_for(ms_per_update - frame_duration);
+        auto sleep_duration =
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                ms_per_update - frame_duration);
+
+        Logger::Debug("Sleep for", sleep_duration.count());
+        std::this_thread::sleep_for(sleep_duration);
       }
 
       // Press  ESC on keyboard to  exit
@@ -125,8 +148,9 @@ void sender(const std::string& recv_address_)
 
 int main(int argc, char* argv[])
 {
-  Logger::SetLevel(Logger::INFO);
+  Logger::SetLevel(Logger::DEBUG);
   std::string recv_address;
+  std::cout << ::asio::ip::host_name() << std::endl;
   if (argc < 2)
   {
     Logger::Warning("No Address passed, using localhost");

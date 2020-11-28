@@ -31,7 +31,7 @@ void displayMat(cv::Mat mat, const std::string& windowName_)
 
   auto& win = winIter->second;
 
-  const int max_display_width = 1200;
+  const int max_display_width = 1920;
   if (frame.size().width > max_display_width)
   {
     cv::Mat resized;

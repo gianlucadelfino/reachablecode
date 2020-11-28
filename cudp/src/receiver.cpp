@@ -28,6 +28,7 @@ struct FrameStitcher
 
   void add(const InputBuffer::Header& h_, ::asio::const_buffer part_)
   {
+    if (_parts_num <= 0) return;
     assert(_parts_num > 0);
     assert(h_.part_begin + part_.size() <= _image_buffer.size());
 
@@ -35,7 +36,7 @@ struct FrameStitcher
     _parts_num--;
   }
 
-  bool is_complete() const { return _parts_num == 0; }
+  bool is_complete() const { return _parts_num == 0;}
 
   cv::Mat decoded() const
   {
@@ -52,7 +53,9 @@ struct FramesManager
 {
   void add(const InputBuffer::Header& h_, ::asio::const_buffer part_)
   {
-    if (h_.frame_id < _last_frame_id - 2)
+    const int old_frame_allowance = 10;
+    if (h_.frame_id < _last_frame_id - old_frame_allowance
+        or h_.frame_id < _last_complete_frame)
     {
       std::cerr << "too old " << h_.frame_id << std::endl;
       // Too old, throw it away
@@ -64,13 +67,13 @@ struct FramesManager
       //      << _last_frame_id << std::endl;
       // Throw away the old one and start with the new one
       _last_frame_id = std::max(_last_frame_id, h_.frame_id);
-      _frames.erase(_last_frame_id - 2);
+      _frames.erase(_last_frame_id - old_frame_allowance);
     }
 
     auto frameIter = _frames.find(h_.frame_id);
     if (frameIter == _frames.cend())
     {
-      TimeLogger t("New frame found", std::cout);
+      TimeLogger t("New frame found: " + std::to_string(h_.frame_id), std::cout);
       frameIter = _frames
                       .insert(std::make_pair(h_.frame_id,
                                              FrameStitcher(h_.total_parts)))
@@ -102,11 +105,19 @@ struct FramesManager
     assert(_last_complete_frame > -1);
     FrameStitcher frame_stitcher = std::move(_frames.at(_last_complete_frame));
     Logger::Debug("Decoded frame", _last_complete_frame);
+
+    // Clean all old frames
+    for(int i = _last_cleaned; i < _last_complete_frame; ++i)
+    {
+        _frames.erase(i);
+    }
+
     _last_complete_frame = -1;
     return frame_stitcher.decoded();
   }
 
   private:
+  int _last_cleaned{};
   int _last_complete_frame{-1};
   int _last_frame_id{};
   std::map<int, FrameStitcher> _frames;
@@ -183,7 +194,7 @@ void receiver(const std::string& recv_address_)
     Handler handler(recv_socket, input_buffer, disruptor);
     recv_socket.async_receive(input_buffer.data(), handler);
 
-    std::thread display_frame_thread([&disruptor] {
+    std::thread display_frame_thread([&disruptor, &recv_socket] {
       try
       {
         while (true)
@@ -216,6 +227,7 @@ void receiver(const std::string& recv_address_)
           std::this_thread::sleep_for(std::chrono::milliseconds(16));
           if (c == 27)
           {
+            recv_socket.close();
             break;
           }
         }
