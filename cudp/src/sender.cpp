@@ -10,6 +10,7 @@
 #include <asio/ip/host_name.hpp>
 #include <asio/ip/udp.hpp>
 
+#include "CountdownTimer.h"
 #include "InputBuffer.h"
 #include "LockFreeSpsc.h"
 #include "OpenCVUtils.h"
@@ -49,15 +50,17 @@ void sender(const std::string& recv_address_)
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
 
-    // TODO: make this dynamic?
-    compression_params.push_back(
-        50); // that's percent, so 100 == no compression
+    // this is percent, so 100 == no compression
+    compression_params.push_back(50);
+    int& compression_rate = compression_params.back();
 
     std::vector<uchar> buffer(20 * MB);
 
     // Aim for 24 fps
-    const auto ms_per_update =
-        std::chrono::milliseconds(static_cast<int>(1000 / 24.f));
+    float fps = 24.f;
+
+    CountdownTimer timer(std::chrono::milliseconds(1000));
+    int64_t sent_bytes_per_second = 0;
 
     while (true)
     {
@@ -75,7 +78,7 @@ void sender(const std::string& recv_address_)
       static int frame_id = 0;
 
       {
-        TimeLogger t("Encoding frame", std::cout);
+        // TimeLogger t("Encoding frame", std::cout);
         cv::imencode(".jpg", frame, buffer, compression_params);
       }
 
@@ -107,7 +110,8 @@ void sender(const std::string& recv_address_)
                                  InputBuffer::writable_size()));
 
         std::error_code err;
-        sender_socket.send_to(input_buffer.buffer(), recv_endpoint, 0, err);
+        sent_bytes_per_second +=
+            sender_socket.send_to(input_buffer.buffer(), recv_endpoint, 0, err);
         if (err)
         {
           std::cerr << "ERR sending " << err.message() << std::endl;
@@ -122,6 +126,9 @@ void sender(const std::string& recv_address_)
       auto frame_duration =
           (timepoint_after_sending - timepoint_before_compression);
 
+      const auto ms_per_update =
+          std::chrono::milliseconds(static_cast<int>(1000 / fps));
+
       if (frame_duration < ms_per_update)
       {
         auto sleep_duration =
@@ -132,11 +139,38 @@ void sender(const std::string& recv_address_)
         std::this_thread::sleep_for(sleep_duration);
       }
 
+      // Output Stats every second
+      if (timer.is_it_time_yet())
+      {
+        Logger::Info("Streaming Rate", sent_bytes_per_second / 1000.f, "KB/s");
+        sent_bytes_per_second = 0;
+      }
+
       // Press  ESC on keyboard to  exit
       const char c = static_cast<char>(cv::waitKey(1));
       if (c == 27)
       {
         break;
+      }
+      else if (c == 119) // w
+      {
+        fps = std::min(60.f, fps + 1.f);
+        Logger::Info("FPS set to", fps);
+      }
+      else if (c == 115) // s
+      {
+        fps = std::max(5.f, fps - 1.f);
+        Logger::Info("FPS set to", fps);
+      }
+      else if (c == 97) // a
+      {
+        compression_rate = std::max(1, compression_rate - 5);
+        Logger::Info("Image Quality set to", compression_rate, "%");
+      }
+      else if (c == 100) // d
+      {
+        compression_rate = std::min(100, compression_rate + 5);
+        Logger::Info("Image Quality set to", compression_rate, "%");
       }
     }
   }
@@ -148,7 +182,7 @@ void sender(const std::string& recv_address_)
 
 int main(int argc, char* argv[])
 {
-  Logger::SetLevel(Logger::DEBUG);
+  Logger::SetLevel(Logger::INFO);
   std::string recv_address;
   std::cout << ::asio::ip::host_name() << std::endl;
   if (argc < 2)
