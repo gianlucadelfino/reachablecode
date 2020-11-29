@@ -1,6 +1,6 @@
- #include <iostream>
 #include "opencv2/opencv.hpp"
 #include <chrono>
+#include <iostream>
 #include <map>
 #include <thread>
 
@@ -8,14 +8,13 @@
 #include <asio/io_context.hpp>
 #include <asio/ip/udp.hpp>
 
-
+#include "CountdownTimer.h"
+#include "InputBuffer.h"
+#include "LockFreeSpsc.h"
 #include "Logger.h"
 #include "OpenCVUtils.h"
-#include "LockFreeSpsc.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
-#include "InputBuffer.h"
-
 
 struct FrameStitcher
 {
@@ -28,7 +27,8 @@ struct FrameStitcher
 
   void add(const InputBuffer::Header& h_, ::asio::const_buffer part_)
   {
-    if (_parts_num <= 0) return;
+    if (_parts_num <= 0)
+      return;
     assert(_parts_num > 0);
     assert(h_.part_begin + part_.size() <= _image_buffer.size());
 
@@ -36,7 +36,7 @@ struct FrameStitcher
     _parts_num--;
   }
 
-  bool is_complete() const { return _parts_num == 0;}
+  bool is_complete() const { return _parts_num == 0; }
 
   cv::Mat decoded() const
   {
@@ -54,8 +54,8 @@ struct FramesManager
   void add(const InputBuffer::Header& h_, ::asio::const_buffer part_)
   {
     const int old_frame_allowance = 10;
-    if (h_.frame_id < _last_frame_id - old_frame_allowance
-        or h_.frame_id < _last_complete_frame)
+    if (h_.frame_id < _last_frame_id - old_frame_allowance or
+        h_.frame_id < _last_complete_frame)
     {
       std::cerr << "too old " << h_.frame_id << std::endl;
       // Too old, throw it away
@@ -73,7 +73,8 @@ struct FramesManager
     auto frameIter = _frames.find(h_.frame_id);
     if (frameIter == _frames.cend())
     {
-      TimeLogger t("New frame found: " + std::to_string(h_.frame_id), std::cout);
+      // TimeLogger t("New frame found: " + std::to_string(h_.frame_id),
+      //            std::cout);
       frameIter = _frames
                       .insert(std::make_pair(h_.frame_id,
                                              FrameStitcher(h_.total_parts)))
@@ -107,9 +108,9 @@ struct FramesManager
     Logger::Debug("Decoded frame", _last_complete_frame);
 
     // Clean all old frames
-    for(int i = _last_cleaned; i < _last_complete_frame; ++i)
+    for (int i = _last_cleaned; i < _last_complete_frame; ++i)
     {
-        _frames.erase(i);
+      _frames.erase(i);
     }
 
     _last_complete_frame = -1;
@@ -138,7 +139,7 @@ void receiver(const std::string& recv_address_)
     InputBuffer input_buffer;
 
     ::asio::ip::udp::endpoint recv_endpoint(
-      ::asio::ip::address::from_string(recv_address_), recv_port);
+        ::asio::ip::address::from_string(recv_address_), recv_port);
 
     recv_socket.open(::asio::ip::udp::v4());
 
@@ -157,7 +158,7 @@ void receiver(const std::string& recv_address_)
       {
       }
 
-      void operator()(asio::error_code err, std::size_t)
+      void operator()(asio::error_code err, std::size_t recv_size_)
       {
         if (err)
         {
@@ -182,6 +183,19 @@ void receiver(const std::string& recv_address_)
           }
 
           _socket.async_receive(_input_buffer.data(), *this);
+
+          static CountdownTimer timer(std::chrono::milliseconds(1000));
+          static int64_t recv_bytes_per_second = 0;
+
+          recv_bytes_per_second += recv_size_;
+
+          // Output Stats every second
+          if (timer.is_it_time_yet())
+          {
+            Logger::Info(
+                "Streaming Rate", recv_bytes_per_second / 1000.f, "KB/s");
+            recv_bytes_per_second = 0;
+          }
         }
       }
 
@@ -224,7 +238,7 @@ void receiver(const std::string& recv_address_)
 
           // Press  ESC on keyboard to  exit
           const char c = static_cast<char>(cv::waitKey(1));
-          std::this_thread::sleep_for(std::chrono::milliseconds(16));
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
           if (c == 27)
           {
             recv_socket.close();
@@ -259,8 +273,8 @@ int main(int argc, char* argv[])
   std::string recv_address;
   if (argc < 2)
   {
-      Logger::Warning("No Address passed, using localhost");
-      recv_address = "127.0.0.1";
+    Logger::Warning("No Address passed, using localhost");
+    recv_address = "127.0.0.1";
   }
   else
   {

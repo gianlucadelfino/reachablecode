@@ -25,19 +25,6 @@ void sender(const std::string& recv_address_)
 
     ::asio::ip::udp::resolver resolver(ioContext);
 
-    ::asio::ip::udp::resolver::query query(::asio::ip::host_name(), "");
-    //    const auto addr = resolver.resolve(query)->endpoint().address();
-    //    std::cout<<"USing "<< addr.to_string()<<std::endl;
-
-    ::asio::ip::udp::resolver::iterator it = resolver.resolve(query);
-
-    while (it != ::asio::ip::udp::resolver::iterator())
-    {
-      auto addr = (it++)->endpoint().address();
-
-      std::cout << addr.to_string() << std::endl;
-    }
-
     ::asio::ip::udp::socket sender_socket(ioContext);
 
     sender_socket.open(::asio::ip::udp::v4());
@@ -184,7 +171,6 @@ int main(int argc, char* argv[])
 {
   Logger::SetLevel(Logger::INFO);
   std::string recv_address;
-  std::cout << ::asio::ip::host_name() << std::endl;
   if (argc < 2)
   {
     Logger::Warning("No Address passed, using localhost");
