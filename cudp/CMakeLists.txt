@@ -46,7 +46,7 @@ endif()
 set(GCC_DIALECT_FLAGS "-std=c++17")
 
 # Change this for release
-set(CMAKE_BUILD_TYPE "debug")
+set(CMAKE_BUILD_TYPE "release")
 
 if(CMAKE_BUILD_TYPE MATCHES "[Rr][Ee][Ll][Ee][Aa][Ss][Ee]")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")

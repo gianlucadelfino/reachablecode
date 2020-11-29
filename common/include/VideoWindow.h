@@ -17,7 +17,7 @@ class Window
     {
       throw std::runtime_error("We cannot instantiate a window without a name");
     }
-    cv::namedWindow(_window_name.c_str());
+    cv::namedWindow(_window_name.c_str(), cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO);
   }
 
   std::string getWindowName() const { return _window_name; }
@@ -69,7 +69,10 @@ class VideoWindow
     // TODO: set via button HD/FULLHD
     _cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
     _cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+  }
 
+  void enableControlBars()
+  {
     cv::createTrackbar(
         "Brightness",
         getWindowName().c_str(),
