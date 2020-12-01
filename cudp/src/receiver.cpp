@@ -57,14 +57,13 @@ struct FramesManager
     if (h_.frame_id < _last_frame_id - old_frame_allowance or
         h_.frame_id < _last_complete_frame)
     {
-      std::cerr << "too old " << h_.frame_id << std::endl;
       // Too old, throw it away
+      Logger::Debug("Got old frame", h_.frame_id, ". Discarded");
       return;
     }
     else
     {
-      //      std::cerr << "got frame id " << h_.frame_id << "_last_frame id "
-      //      << _last_frame_id << std::endl;
+      Logger::Debug("Got frame id", h_.frame_id, ". Current last frame id", _last_frame_id);
       // Throw away the old one and start with the new one
       _last_frame_id = std::max(_last_frame_id, h_.frame_id);
       _frames.erase(_last_frame_id - old_frame_allowance);

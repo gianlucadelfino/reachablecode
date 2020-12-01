@@ -57,7 +57,7 @@ void sender(const std::string& recv_address_)
       // If the frame is empty, break immediately
       if (frame.empty())
       {
-        std::cerr << "Emtpy frame";
+        Logger::Error("Empty Frame");
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
       }
@@ -101,7 +101,7 @@ void sender(const std::string& recv_address_)
             sender_socket.send_to(input_buffer.buffer(), recv_endpoint, 0, err);
         if (err)
         {
-          std::cerr << "ERR sending " << err.message() << std::endl;
+          Logger::Error("Error sending", err.message());
         }
       }
 
