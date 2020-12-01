@@ -43,7 +43,7 @@ void sender(const std::string& recv_address_)
 
     std::vector<uchar> buffer(20 * MB);
 
-    // Aim for 24 fps
+    // Start at 24 fps
     float fps = 24.f;
 
     CountdownTimer timer(std::chrono::milliseconds(1000));

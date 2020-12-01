@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
   if (argc < 2)
   {
     Logger::Warning("No Address passed, using localhost");
-    recv_address = "192.168.178.112";
+    recv_address = "127.0.0.1";
   }
   else
   {
