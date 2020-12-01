@@ -11,7 +11,7 @@
 namespace opencv_utils
 {
 
-void displayMat(cv::Mat mat, const std::string& windowName_)
+inline void displayMat(cv::Mat mat, const std::string& windowName_, float scale=1.f)
 {
   static std::mutex display_mat;
   std::lock_guard<std::mutex> l(display_mat);
@@ -31,13 +31,18 @@ void displayMat(cv::Mat mat, const std::string& windowName_)
 
   auto& win = winIter->second;
 
+  if (scale > 1.f or scale < 1.f)
+  {
+    cv::resize(frame, frame, cv::Size(), scale, scale, cv::INTER_LANCZOS4);
+  }
+
   const int max_display_width = 1920;
   if (frame.size().width > max_display_width)
   {
     cv::Mat resized;
-    const double scale = static_cast<double>(max_display_width) /
-                         static_cast<double>(frame.size().width);
-    cv::resize(frame, resized, cv::Size(), scale, scale, cv::INTER_LANCZOS4);
+    const double max_scale = static_cast<double>(max_display_width) /
+                             static_cast<double>(frame.size().width);
+    cv::resize(frame, resized, cv::Size(), max_scale, max_scale, cv::INTER_LANCZOS4);
     cv::imshow(win.getWindowName().c_str(), resized);
   }
   else
@@ -48,6 +53,7 @@ void displayMat(cv::Mat mat, const std::string& windowName_)
 
 // Adapted from
 // https://docs.opencv.org/master/db/da4/samples_2dnn_2text_detection_8cpp-example.html
+inline
 std::pair<std::vector<cv::RotatedRect>, std::vector<float>> decodeBoundingBoxes(
     const cv::Mat& scores, const cv::Mat& geometry, float scoreThresh)
 {
@@ -109,6 +115,7 @@ std::pair<std::vector<cv::RotatedRect>, std::vector<float>> decodeBoundingBoxes(
 
 // Find the bounding boxes see:
 // https://github.com/opencv/opencv/blob/3.4/samples/cpp/tutorial_code/ShapeDescriptors/generalContours_demo1.cpp
+inline
 std::vector<cv::Rect> findBoundingBoxes(const cv::Mat& mat)
 {
   cv::Mat frame = mat.clone();
@@ -165,6 +172,7 @@ std::vector<cv::Rect> findBoundingBoxes(const cv::Mat& mat)
 
 // http://felix.abecassis.me/2011/09/opencv-detect-skew-angle/
 // https://docs.opencv.org/2.4/doc/tutorials/imgproc/imgtrans/hough_lines/hough_lines.html
+inline
 cv::Mat straighten(cv::Mat frame)
 {
   cv::Mat orig = frame.clone();
@@ -265,6 +273,7 @@ cv::Mat straighten(cv::Mat frame)
  * @param rects_
  * @return a list of fewer and bigger (i.e. joined) rects.
  */
+inline
 std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
 {
   std::vector<cv::Rect> joinedAlignedRects;

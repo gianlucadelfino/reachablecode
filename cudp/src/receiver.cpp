@@ -231,15 +231,27 @@ void receiver(const std::string& recv_address_)
             }
           }
 
+          static float scale = 1.f;
+
           if (!frame.empty())
           {
-            opencv_utils::displayMat(frame, "recv");
+            opencv_utils::displayMat(frame, "recv", scale);
           }
 
           // Press  ESC on keyboard to  exit
           const char c = static_cast<char>(cv::waitKey(1));
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
-          if (c == 27)
+          if (c == 43) // +
+          {
+            scale = std::min(2.f, scale + .2f);
+            Logger::Info("Image scale set to", scale);
+          }
+          else if (c == 45) // -
+          {
+            scale = std::max(.2f, scale - .2f);
+            Logger::Info("Image scale set to", scale);
+          }
+          else if (c == 27)
           {
             recv_socket.close();
             break;
@@ -274,7 +286,7 @@ int main(int argc, char* argv[])
   if (argc < 2)
   {
     Logger::Warning("No Address passed, using localhost");
-    recv_address = "127.0.0.1";
+    recv_address = "192.168.178.112";
   }
   else
   {

@@ -33,7 +33,7 @@ void sender(const std::string& recv_address_)
     ::asio::ip::udp::endpoint recv_endpoint(
         ::asio::ip::address::from_string(recv_address_), recv_port);
 
-    VideoWindow win(1, "cUDP");
+    VideoWindow win(0, "cUDP");
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
 
