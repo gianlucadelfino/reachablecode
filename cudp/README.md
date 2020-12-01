@@ -17,4 +17,4 @@ Launch the receiver and sender program passing the ip of the receiver to both. T
     cUDPsender 192.169.0.1
 
 ## More Info
-[CppFiddler.com](www.cppfiddler.com)
+[CppFiddler.com](https://www.cppfiddler.com)
