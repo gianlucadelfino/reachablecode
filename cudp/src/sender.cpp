@@ -16,6 +16,7 @@
 #include "OpenCVUtils.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
+#include "AudioDevice.h"
 
 void sender(const std::string& recv_address_)
 {

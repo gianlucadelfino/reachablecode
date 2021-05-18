@@ -66,9 +66,10 @@ class VideoWindow
       throw std::runtime_error("Error opening video stream");
     }
 
-    // TODO: set via button HD/FULLHD
-    _cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
-    _cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
+    // Disabled because of bug in opencv 4.2
+    // https://github.com/opencv/opencv/issues/10324
+    //    _cap.set(cv::CAP_PROP_FRAME_WIDTH, 1920);
+    //    _cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1080);
   }
 
   void enableControlBars()

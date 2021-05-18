@@ -22,6 +22,9 @@ endif()
 # OpenCv
 find_package(OpenCV REQUIRED)
 
+# OpenAL
+find_package(OpenAL REQUIRED)
+
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "../3rdParties")
 
@@ -68,7 +71,8 @@ if(WIN32)
   set(WIN_ASIO_INCLUDES "C:/asio-1.18.0/include")
 endif()
 
-target_link_libraries(cUDPsender ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS})
-target_link_libraries(cUDPreceiver ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS})
+target_link_libraries(cUDPsender ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS} ${OPENAL_LIBRARY})
+target_link_libraries(cUDPreceiver ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS} ${OPENAL_LIBRARY})
 
-include_directories(SYSTEM "include" ${WIN_ASIO_INCLUDES} ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
+message(STATUS "LIBS"${OPENAL_INCLUDE_DIR})
+include_directories(SYSTEM "include" ${WIN_ASIO_INCLUDES} ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE} ${OPENAL_INCLUDE_DIR})
