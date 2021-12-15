@@ -2,4 +2,10 @@
 
 #include "simple_thread_pool.hpp"
 
-int main() { std::cout << "adding task\n"; }
+int main()
+{
+  simple_thread_pool pool(3);
+  auto fut = pool.add_task2([]() -> int { return 1 + 2; });
+
+  fut.get();
+}

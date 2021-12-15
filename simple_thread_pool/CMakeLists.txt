@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(simple_thread_pool)
 
-
-
 # Dependencies
 enable_testing()
 find_package(GTest REQUIRED)
@@ -30,5 +28,5 @@ set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries)
 include_directories(${LIB_DIR}/include)
 
 add_subdirectory(tests)
-# add_subdirectory(apps)
+add_subdirectory(apps)
 add_subdirectory(libraries)

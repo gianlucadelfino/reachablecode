@@ -8,6 +8,7 @@
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <concepts>
 
 class simple_thread_pool
 {
@@ -41,7 +42,7 @@ class simple_thread_pool
     }
   }
 
-  template <typename Callable,
+  template <std::regular_invocable Callable,
             typename return_type = typename std::result_of<Callable()>::type>
   std::future<return_type> add_task2(Callable&& callable_)
   {
