@@ -1,4 +1,4 @@
-#include "mosquito_detector.h"
+#include "mosquito_detector.hpp"
 
 int main() {
     mosquito_detector detector(1);
