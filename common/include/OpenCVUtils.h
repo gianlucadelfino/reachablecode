@@ -5,13 +5,15 @@
 #include "opencv2/opencv.hpp"
 
 #include "Logger.h"
-#include "math_utils.hpp"
 #include "VideoWindow.h"
+#include "math_utils.hpp"
 
 namespace opencv_utils
 {
 
-inline void displayMat(cv::Mat mat, const std::string& windowName_, float scale=1.f)
+inline void displayMat(cv::Mat mat,
+                       const std::string& windowName_,
+                       float scale = 1.f)
 {
   static std::mutex display_mat;
   std::lock_guard<std::mutex> l(display_mat);
@@ -42,7 +44,8 @@ inline void displayMat(cv::Mat mat, const std::string& windowName_, float scale=
     cv::Mat resized;
     const double max_scale = static_cast<double>(max_display_width) /
                              static_cast<double>(frame.size().width);
-    cv::resize(frame, resized, cv::Size(), max_scale, max_scale, cv::INTER_LANCZOS4);
+    cv::resize(
+        frame, resized, cv::Size(), max_scale, max_scale, cv::INTER_LANCZOS4);
     cv::imshow(win.getWindowName().c_str(), resized);
   }
   else
@@ -53,9 +56,10 @@ inline void displayMat(cv::Mat mat, const std::string& windowName_, float scale=
 
 // Adapted from
 // https://docs.opencv.org/master/db/da4/samples_2dnn_2text_detection_8cpp-example.html
-inline
-std::pair<std::vector<cv::RotatedRect>, std::vector<float>> decodeBoundingBoxes(
-    const cv::Mat& scores, const cv::Mat& geometry, float scoreThresh)
+inline std::pair<std::vector<cv::RotatedRect>, std::vector<float>>
+decodeBoundingBoxes(const cv::Mat& scores,
+                    const cv::Mat& geometry,
+                    float scoreThresh)
 {
   std::pair<std::vector<cv::RotatedRect>, std::vector<float>> detectionsConfs;
   std::vector<cv::RotatedRect>& detections = detectionsConfs.first;
@@ -113,10 +117,19 @@ std::pair<std::vector<cv::RotatedRect>, std::vector<float>> decodeBoundingBoxes(
   return detectionsConfs;
 }
 
+inline cv::Rect findMosquito(const cv::Mat& mat)
+{
+  cv::Mat frame = mat.clone();
+  if (frame.channels() > 1)
+  {
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+  }
+  
+}
+
 // Find the bounding boxes see:
 // https://github.com/opencv/opencv/blob/3.4/samples/cpp/tutorial_code/ShapeDescriptors/generalContours_demo1.cpp
-inline
-std::vector<cv::Rect> findBoundingBoxes(const cv::Mat& mat)
+inline std::vector<cv::Rect> findBoundingBoxes(const cv::Mat& mat)
 {
   cv::Mat frame = mat.clone();
   if (frame.channels() > 1)
@@ -172,8 +185,7 @@ std::vector<cv::Rect> findBoundingBoxes(const cv::Mat& mat)
 
 // http://felix.abecassis.me/2011/09/opencv-detect-skew-angle/
 // https://docs.opencv.org/2.4/doc/tutorials/imgproc/imgtrans/hough_lines/hough_lines.html
-inline
-cv::Mat straighten(cv::Mat frame)
+inline cv::Mat straighten(cv::Mat frame)
 {
   cv::Mat orig = frame.clone();
 
@@ -229,9 +241,8 @@ cv::Mat straighten(cv::Mat frame)
   const std::vector<double>& most_common_bin =
       *std::max_element(binned_angles.cbegin(),
                         binned_angles.cend(),
-                        [](const auto& vecA, const auto& vecB) {
-                          return vecA.size() < vecB.size();
-                        });
+                        [](const auto& vecA, const auto& vecB)
+                        { return vecA.size() < vecB.size(); });
 
   // Get the average angle
   const double angle =
@@ -240,7 +251,8 @@ cv::Mat straighten(cv::Mat frame)
   // We just want to straighten, not to rotate: even if it's upside-
   // down it doesn't matter as we'll rotate 3 times 90 degrees later.
   // So only want to rotate to the closest 90 degree angle
-  const double adjusted_angle = [a = angle]() {
+  const double adjusted_angle = [a = angle]()
+  {
     double angle = std::fmod(a + 180.0, 90.0);
     if (angle > 45.0)
     {
@@ -273,8 +285,8 @@ cv::Mat straighten(cv::Mat frame)
  * @param rects_
  * @return a list of fewer and bigger (i.e. joined) rects.
  */
-inline
-std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
+inline std::vector<cv::Rect> joinAlignedRects(
+    const std::vector<cv::Rect>& rects_)
 {
   std::vector<cv::Rect> joinedAlignedRects;
 
@@ -317,6 +329,36 @@ std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
   }
 
   return joinedAlignedRects;
+}
+
+/**
+ * Average N images
+ */
+inline cv::Mat get_average(const std::vector<cv::Mat>& images_)
+{
+  if (images_.empty())
+    return cv::Mat();
+
+  // Create a 0 initialized image to use as accumulator
+  cv::Mat m(images_[0].rows, images_[0].cols, CV_64FC3);
+  m.setTo(cv::Scalar(0, 0, 0, 0));
+
+  // Use a temp image to hold the conversion of each input image to CV_64FC3
+  // This will be allocated just the first time, since all your images have
+  // the same size.
+  cv::Mat temp;
+  for (int i = 0; i < images_.size(); ++i)
+  {
+    // Convert the input images to CV_64FC3 ...
+    images_[i].convertTo(temp, CV_64FC3);
+
+    // ... so you can accumulate
+    m += temp;
+  }
+
+  // Convert back to CV_8UC3 type, applying the division to get the actual mean
+  m.convertTo(m, CV_8U, 1. / images_.size());
+  return m;
 }
 
 } // namespace opencv_utils
