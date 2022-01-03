@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Logger.h"
-#include "Math.h"
+#include "math_utils.hpp"
 
 #include <memory>
 #include <vector>

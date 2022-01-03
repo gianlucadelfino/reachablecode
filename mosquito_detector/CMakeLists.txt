@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.0)
-project(mosquito_detector)
+project(mosquito_detector CXX)
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -7,10 +7,12 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 find_package(Threads)
 
 if(WIN32)
+    # This can be any version of opencv
     set(OpenCV_DIR "C:/OpenCV-4.5.5/")
 endif()
 
 # OpenCv
+set(OpenCV_STATIC ON)
 find_package(OpenCV REQUIRED)
 
 # set the common include
@@ -33,7 +35,12 @@ if(NOT WIN32)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS} ${GCC_SANITIZE_FLAGS} ${GCC_DEBUG_FLAGS}")
   endif()
-
+else()
+    add_compile_options(
+        $<$<CONFIG:>:/MT> #---------|
+        $<$<CONFIG:Debug>:/MTd> #---|-- Statically link the runtime libraries
+        $<$<CONFIG:Release>:/MT> #--|
+    )
 endif()
 
 enable_testing()
@@ -41,7 +48,7 @@ enable_testing()
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries)
 include_directories(${LIB_DIR}/include)
 
-add_subdirectory(tests)
+# add_subdirectory(tests)
 add_subdirectory(apps)
 
 add_subdirectory(libraries)

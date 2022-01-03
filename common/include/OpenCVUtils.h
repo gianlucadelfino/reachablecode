@@ -5,7 +5,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "Logger.h"
-#include "Math.h"
+#include "math_utils.hpp"
 #include "VideoWindow.h"
 
 namespace opencv_utils
@@ -291,8 +291,8 @@ std::vector<cv::Rect> joinAlignedRects(const std::vector<cv::Rect>& rects_)
             sorted_rects.end(),
             [](const auto& lhs, const auto& rhs) { return lhs.y < rhs.y; });
 
-  float last_y = sorted_rects.front().y;
-  float last_height = sorted_rects.front().height;
+  int last_y = sorted_rects.front().y;
+  int last_height = sorted_rects.front().height;
   std::vector<cv::Point> cluster;
 
   for (const auto& rect : sorted_rects)
