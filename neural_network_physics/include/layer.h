@@ -10,9 +10,8 @@
 
 class Layer
 {
-  public:
-  Layer(int num_neurons_, int num_inputs_)
-      : _neuron_outputs(num_neurons_), _num_inputs(num_inputs_)
+public:
+  Layer(int num_neurons_, int num_inputs_) : _neuron_outputs(num_neurons_), _num_inputs(num_inputs_)
   {
     _neurons.reserve(num_neurons_);
     for (int id = 0; id < num_neurons_; ++id)
@@ -32,10 +31,8 @@ class Layer
     {
       const auto& weights = _neurons[i].get_input_weights();
       assert(weights.size() == prev_layer_outputs_.size());
-      const float inner_prod = std::inner_product(weights.cbegin(),
-                                                  weights.cend(),
-                                                  prev_layer_outputs_.cbegin(),
-                                                  inner_prod);
+      const float inner_prod = std::inner_product(
+          weights.cbegin(), weights.cend(), prev_layer_outputs_.cbegin(), inner_prod);
       _neuron_outputs[i] = activation_function(inner_prod);
     }
   }
@@ -54,8 +51,7 @@ class Layer
     // todo omp pragma
     for (Neuron& neuron : _neurons)
     {
-      neuron.back_propagate_inner(_neuron_outputs[neuron.get_id()],
-                                  downstream_layer_._neurons);
+      neuron.back_propagate_inner(_neuron_outputs[neuron.get_id()], downstream_layer_._neurons);
     }
   }
 
@@ -83,7 +79,7 @@ class Layer
     std::cout << std::endl;
   }
 
-  private:
+private:
   static float activation_function(float val_)
   {
     // TODO: try Relu

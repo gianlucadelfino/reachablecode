@@ -1,13 +1,12 @@
 #pragma once
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
 class Neuron
 {
-  public:
-  Neuron(int id_, int num_inputs_)
-      : _id(id_)
+public:
+  Neuron(int id_, int num_inputs_) : _id(id_)
   {
     // Initialize all the weight randomly
     std::default_random_engine generator(42);
@@ -30,10 +29,7 @@ class Neuron
     return _input_weights[neuron_id_];
   }
 
-  const std::vector<float>& get_input_weights_deltas() const
-  {
-    return _input_weights_delta;
-  }
+  const std::vector<float>& get_input_weights_deltas() const { return _input_weights_delta; }
 
   int get_id() const { return _id; }
 
@@ -58,11 +54,9 @@ class Neuron
     // layer to build  up delta
     for (const Neuron& downstream_neuron : downstream_neurons_)
     {
-      const float downstream_last_gradient =
-          downstream_neuron.get_last_gradient();
+      const float downstream_last_gradient = downstream_neuron.get_last_gradient();
 
-      const float downstream_input_weight =
-          downstream_neuron.get_input_weight(_id);
+      const float downstream_input_weight = downstream_neuron.get_input_weight(_id);
 
       delta += downstream_last_gradient * downstream_input_weight;
     }
@@ -72,12 +66,10 @@ class Neuron
 
   void update_input_weights(const std::vector<float>& upstream_layer_outputs_)
   {
-    for (size_t input_neuron_id = 0; input_neuron_id < _input_weights.size();
-         ++input_neuron_id)
+    for (size_t input_neuron_id = 0; input_neuron_id < _input_weights.size(); ++input_neuron_id)
     {
-      const float weight_delta =
-          eta * upstream_layer_outputs_[input_neuron_id] * _last_gradient +
-          alpha * _input_weights_delta[input_neuron_id];
+      const float weight_delta = eta * upstream_layer_outputs_[input_neuron_id] * _last_gradient +
+                                 alpha * _input_weights_delta[input_neuron_id];
 
       _input_weights_delta[input_neuron_id] = weight_delta;
       _input_weights[input_neuron_id] += weight_delta;
@@ -86,7 +78,7 @@ class Neuron
 
   std::ostream& operator<<(std::ostream& o)
   {
-    for(float w : _input_weights)
+    for (float w : _input_weights)
     {
       o << w << "\t";
     }
@@ -94,7 +86,7 @@ class Neuron
     return o;
   }
 
-  private:
+private:
   static float activation_function_derivative(float x_)
   {
     // TODO: try Relu

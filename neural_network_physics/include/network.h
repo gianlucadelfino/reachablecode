@@ -4,16 +4,16 @@
 
 class Network
 {
-  public:
+public:
   explicit Network(int input_size_)
   {
     // + 1 is bias
-    _layers.emplace_back(input_size_+1, 0);
+    _layers.emplace_back(input_size_ + 1, 0);
   }
 
   void add_inner_layer(int num_neurons_)
   {
-    add_output_layer(num_neurons_+1); // +1 is bias
+    add_output_layer(num_neurons_ + 1); // +1 is bias
   }
 
   void add_output_layer(int num_neurons_)
@@ -84,13 +84,14 @@ class Network
     return 0.5f * square_sum;
   }
 
-  void print() const {
+  void print() const
+  {
     for (const Layer& layer : _layers)
     {
       layer.print();
     }
   }
 
-  private:
+private:
   std::vector<Layer> _layers;
 };
