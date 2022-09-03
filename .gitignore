@@ -3,3 +3,4 @@ build*
 CMakeLists.txt.user
 *.swp
 *.vscode*/
+.cache/

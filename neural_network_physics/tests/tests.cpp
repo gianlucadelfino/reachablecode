@@ -1,5 +1,8 @@
 #include "Logger.h"
+#include "multiplicative_layer.h"
 #include "network.h"
+#include "standard_layer.h"
+
 #include "gtest/gtest.h"
 
 namespace
@@ -23,8 +26,8 @@ void get_xor_training_data(std::vector<float>* inputs, std::vector<float>* targe
 TEST(Network, xor_learning)
 {
   Network net(2);
-  net.add_inner_layer(4);
-  net.add_output_layer(1);
+  net.add_inner_layer<StandardLayer>(4);
+  net.add_output_layer<StandardLayer>(1);
 
   for (int epoch = 0; epoch < 20000; ++epoch)
   {
@@ -34,7 +37,7 @@ TEST(Network, xor_learning)
 
     const std::vector<float> outputs = net.feed_forward(inputs);
 
-    const float err = net.get_cur_network_error(targets);
+    // const float err = net.get_cur_network_error(targets);
 
     // Debug
     // Logger::Info(
@@ -51,7 +54,7 @@ TEST(Network, xor_learning)
     const float err = net.get_cur_network_error({expected});
 
     // Debug
-    // Logger::Info("Test", "Input", a, ", ", b, "output", outputs[0], "err", err);
+    Logger::Info("Test", "Input", a, ", ", b, "output", outputs[0], "err", err);
 
     EXPECT_NEAR(0.f, err, 0.0001f);
     EXPECT_NEAR(expected, outputs[0], 0.001f);

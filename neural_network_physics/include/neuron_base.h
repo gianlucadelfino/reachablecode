@@ -1,12 +1,18 @@
 #pragma once
 
+#include <cassert>
 #include <iostream>
+#include <memory>
+#include <random>
 #include <vector>
 
-class Neuron
+class NeuronBase;
+using Neuron_ptr = std::unique_ptr<NeuronBase>;
+
+class NeuronBase
 {
 public:
-  Neuron(int id_, int num_inputs_) : _id(id_)
+  NeuronBase(int id_, int num_inputs_) : _id(id_)
   {
     // Initialize all the weight randomly
     std::default_random_engine generator(42);
@@ -29,40 +35,16 @@ public:
     return _input_weights[neuron_id_];
   }
 
-  const std::vector<float>& get_input_weights_deltas() const { return _input_weights_delta; }
-
   int get_id() const { return _id; }
 
   // For backpropagation...
 
   float get_last_gradient() const { return _last_gradient; }
 
-  void back_propagate_outer(float cur_neuron_output_, float target_)
-  {
+  virtual void update_gradient_outer(float cur_neuron_output_, float target_) = 0;
 
-    const float delta = target_ - cur_neuron_output_;
-
-    _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
-  }
-
-  void back_propagate_inner(float cur_neuron_output_,
-                            const std::vector<Neuron>& downstream_neurons_)
-  {
-
-    float delta{};
-    // For every neuron we look at the weights connecting it to the next
-    // layer to build  up delta
-    for (const Neuron& downstream_neuron : downstream_neurons_)
-    {
-      const float downstream_last_gradient = downstream_neuron.get_last_gradient();
-
-      const float downstream_input_weight = downstream_neuron.get_input_weight(_id);
-
-      delta += downstream_last_gradient * downstream_input_weight;
-    }
-
-    _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
-  }
+  virtual void update_gradient_inner(float cur_neuron_output_,
+                                     const std::vector<Neuron_ptr>& downstream_neurons_) = 0;
 
   void update_input_weights(const std::vector<float>& upstream_layer_outputs_)
   {
@@ -86,13 +68,12 @@ public:
     return o;
   }
 
-private:
-  static float activation_function_derivative(float x_)
-  {
-    // TODO: try Relu
-    const float t = tanh(x_);
-    return 1 - t * t;
-  }
+  virtual float activation_function(float val_) = 0;
+
+  virtual ~NeuronBase() = default;
+
+protected:
+  virtual float activation_function_derivative(float x_) = 0;
 
   const int _id{};
   std::vector<float> _input_weights;

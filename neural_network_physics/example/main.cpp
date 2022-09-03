@@ -1,43 +1,79 @@
 #include "network.h"
 
 #include "Logger.h"
+#include "multiplicative_layer.h"
+#include "standard_layer.h"
 
-void get_xor_training_data(std::vector<float>* inputs, std::vector<float>* targets)
+struct position
 {
-  inputs->clear();
-  targets->clear();
+  float x{};
+  float y{};
+};
 
-  const unsigned int a = rand() & 1;
-  inputs->push_back(a);
+struct velocity : public position
+{
+};
 
-  const unsigned int b = rand() & 1;
-  inputs->push_back(b);
+void generate_inputs(velocity* vel_, float* time_)
+{
+  // Initialize all the weight randomly
+  static std::default_random_engine generator(42);
+  static std::uniform_real_distribution<float> distribution(0.0f, +1.0f);
 
-  targets->push_back(a ^ b);
+  vel_->x = distribution(generator);
+  vel_->y = distribution(generator);
+  *time_ = distribution(generator);
+}
+
+position get_targets(const velocity& vel_, const float time_)
+{
+  position pos;
+  // constexpr float g = 9.8f;
+  pos.x = vel_.x * time_;
+  // vel = -g*time_ + vel_.y;
+  // pos.y = -0.5f*time_*time_*g + vel_.y*time_;
+  return pos;
 }
 
 int main()
 {
+  Network net(3);
 
-  Network net(2);
-  net.add_inner_layer(4);
-  net.add_output_layer(1);
+  net.add_inner_layer<StandardLayer>(5);
+  net.add_inner_layer<MultiplicativeLayer>(5);
+  net.add_output_layer<StandardLayer>(2);
 
-  for (int epoch = 0; epoch < 20000; ++epoch)
+  for (int epoch = 0; epoch < 2000000; ++epoch)
   {
-    std::vector<float> inputs;
-    std::vector<float> targets;
-    get_xor_training_data(&inputs, &targets);
+    velocity vel;
+    float time{};
+    generate_inputs(&vel, &time);
 
-    const std::vector<float> outputs = net.feed_forward(inputs);
+    const std::vector<float> outputs = net.feed_forward({vel.x, vel.y, time});
 
-    const float err = net.get_cur_network_error(targets);
-    Logger::Info(
-        "Epoch", epoch, "Input", inputs[0], ", ", inputs[1], "output", outputs[0], "err", err);
+    const position pos = get_targets(vel, time);
+
+    const float err = net.get_cur_network_error({pos.x * .1f, pos.y * .1f});
+    if (!(epoch % 100000))
+    {
+      Logger::Info("Epoch",
+                   epoch,
+                   "Input vel (",
+                   vel.x,
+                   vel.y,
+                   ") target: (",
+                   pos.x,
+                   pos.y,
+                   ") outputs (",
+                   outputs[0] * 10,
+                   outputs[1] * 10,
+                   "). Err:",
+                   err);
+    }
 
     // net.print();
 
-    net.back_propagate(targets);
+    net.back_propagate({pos.x * .1f, pos.y * .1f});
   }
 
   return 0;
