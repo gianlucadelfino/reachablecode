@@ -46,17 +46,7 @@ public:
   virtual void update_gradient_inner(float cur_neuron_output_,
                                      const std::vector<Neuron_ptr>& downstream_neurons_) = 0;
 
-  void update_input_weights(const std::vector<float>& upstream_layer_outputs_)
-  {
-    for (size_t input_neuron_id = 0; input_neuron_id < _input_weights.size(); ++input_neuron_id)
-    {
-      const float weight_delta = eta * upstream_layer_outputs_[input_neuron_id] * _last_gradient +
-                                 alpha * _input_weights_delta[input_neuron_id];
-
-      _input_weights_delta[input_neuron_id] = weight_delta;
-      _input_weights[input_neuron_id] += weight_delta;
-    }
-  }
+  virtual void update_input_weights(const std::vector<float>& upstream_layer_outputs_) = 0;
 
   std::ostream& operator<<(std::ostream& o)
   {

@@ -22,7 +22,7 @@ public:
       const auto& weights = _neurons[n]->get_input_weights();
       // This layer should have N^2-N weights per neuron.
       const size_t num_outputs = prev_layer_outputs_.size();
-      const size_t num_input_weights = num_outputs * num_outputs - num_outputs;
+      const size_t num_input_weights = MultiplicativeNeuron::gauss(num_outputs);
       assert(weights.size() == num_input_weights);
 
       /*
@@ -41,7 +41,8 @@ public:
       {
         for (size_t j = i; j < num_outputs; ++j)
         {
-          const size_t input_weight_idx = j + i * num_outputs;
+          const size_t input_weight_idx = j + i * num_outputs - MultiplicativeNeuron::gauss(i);
+          assert(input_weight_idx < num_input_weights);
           multiplicative_sum +=
               weights[input_weight_idx] * prev_layer_outputs_[i] * prev_layer_outputs_[j];
         }

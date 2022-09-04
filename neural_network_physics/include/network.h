@@ -41,6 +41,15 @@ public:
     }
 
     return _layers.back()->get_outputs();
+    // // Copy the last layer outwithout the bias
+    // std::vector<float> outputs;
+    // const std::vector<float>& last_layer_outputs = _layers.back()->get_outputs();
+    // assert(last_layer_outputs.size());
+    // outputs.reserve(last_layer_outputs.size());
+    // const auto bias_iter = std::prev(last_layer_outputs.cend());
+    // std::copy(last_layer_outputs.cbegin(), bias_iter, outputs.begin());
+
+    // return outputs;
   }
 
   /**

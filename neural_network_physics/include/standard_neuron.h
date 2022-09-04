@@ -40,19 +40,17 @@ public:
     _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
   }
 
-  //   void update_input_weights(const std::vector<float>& upstream_layer_outputs_)
-  //   {
-  //     for (size_t input_neuron_id = 0; input_neuron_id < _input_weights.size();
-  //     ++input_neuron_id)
-  //     {
-  //       const float weight_delta = eta * upstream_layer_outputs_[input_neuron_id] *
-  //       _last_gradient +
-  //                                  alpha * _input_weights_delta[input_neuron_id];
+  virtual void update_input_weights(const std::vector<float>& upstream_layer_outputs_) override
+  {
+    for (size_t input_neuron_id = 0; input_neuron_id < _input_weights.size(); ++input_neuron_id)
+    {
+      const float weight_delta = eta * upstream_layer_outputs_[input_neuron_id] * _last_gradient +
+                                 alpha * _input_weights_delta[input_neuron_id];
 
-  //       _input_weights_delta[input_neuron_id] = weight_delta;
-  //       _input_weights[input_neuron_id] += weight_delta;
-  //     }
-  //   }
+      _input_weights_delta[input_neuron_id] = weight_delta;
+      _input_weights[input_neuron_id] += weight_delta;
+    }
+  }
 
   virtual float activation_function(float val_) override
   {
@@ -62,7 +60,7 @@ public:
     return tanh(val_);
   }
 
-private:
+protected:
   virtual float activation_function_derivative(float x_) override
   { // TODO: try Relu
     // return x_? 1 : 0.01f;

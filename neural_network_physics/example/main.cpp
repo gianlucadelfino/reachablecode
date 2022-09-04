@@ -28,10 +28,10 @@ void generate_inputs(velocity* vel_, float* time_)
 position get_targets(const velocity& vel_, const float time_)
 {
   position pos;
-  // constexpr float g = 9.8f;
   pos.x = vel_.x * time_;
+  constexpr float g = 9.8f;
   // vel = -g*time_ + vel_.y;
-  // pos.y = -0.5f*time_*time_*g + vel_.y*time_;
+  pos.y = -0.5f*time_*time_*g + vel_.y*time_;
   return pos;
 }
 
@@ -39,8 +39,8 @@ int main()
 {
   Network net(3);
 
-  net.add_inner_layer<StandardLayer>(5);
-  net.add_inner_layer<MultiplicativeLayer>(5);
+  // net.add_inner_layer<StandardLayer>(5);
+  net.add_inner_layer<MultiplicativeLayer>(2);
   net.add_output_layer<StandardLayer>(2);
 
   for (int epoch = 0; epoch < 2000000; ++epoch)
@@ -64,7 +64,9 @@ int main()
                    ") target: (",
                    pos.x,
                    pos.y,
-                   ") outputs (",
+                   ") outputs size :",
+                   outputs.size(),
+                   ", outputs (",
                    outputs[0] * 10,
                    outputs[1] * 10,
                    "). Err:",
