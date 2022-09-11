@@ -41,6 +41,8 @@ public:
     }
 
     return _layers.back()->get_outputs();
+
+    // TODO: remove add_output_layer
     // // Copy the last layer outwithout the bias
     // std::vector<float> outputs;
     // const std::vector<float>& last_layer_outputs = _layers.back()->get_outputs();

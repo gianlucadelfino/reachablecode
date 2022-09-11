@@ -26,13 +26,13 @@ public:
       assert(weights.size() == num_input_weights);
 
       /*
-      outputs:
-      a b c
+      prev outputs:
+        a b c
 
-      combinations:
-      aa ab ac
-      bb bc
-      cc
+      combinations to consider:
+        aa ab ac
+        bb bc
+        cc
 
       Neuron_n = Wn_1 aa + Wn_2 ab + Wn_3 ac + Wn_4 bb + Wn_5 bc + Wn_6 cc
       */

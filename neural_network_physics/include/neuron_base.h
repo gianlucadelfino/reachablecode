@@ -5,6 +5,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include <cmath>
 
 class NeuronBase;
 using Neuron_ptr = std::unique_ptr<NeuronBase>;

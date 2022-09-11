@@ -41,6 +41,8 @@ int main()
 
   // net.add_inner_layer<StandardLayer>(5);
   net.add_inner_layer<MultiplicativeLayer>(2);
+  // net.add_inner_layer<StandardLayer>(5);
+  // net.add_output_layer<MultiplicativeLayer>(2);
   net.add_output_layer<StandardLayer>(2);
 
   for (int epoch = 0; epoch < 2000000; ++epoch)

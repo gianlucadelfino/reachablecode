@@ -37,6 +37,7 @@ public:
       delta += downstream_last_gradient * downstream_input_weight;
     }
 
+    assert(!std::isnan(delta));
     _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
   }
 
@@ -47,6 +48,7 @@ public:
       const float weight_delta = eta * upstream_layer_outputs_[input_neuron_id] * _last_gradient +
                                  alpha * _input_weights_delta[input_neuron_id];
 
+      assert(!std::isnan(weight_delta));
       _input_weights_delta[input_neuron_id] = weight_delta;
       _input_weights[input_neuron_id] += weight_delta;
     }

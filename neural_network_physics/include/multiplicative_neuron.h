@@ -6,10 +6,7 @@
 class MultiplicativeNeuron : public NeuronBase
 {
 public:
-  MultiplicativeNeuron(int id_, int num_inputs_)
-      : NeuronBase(id_, gauss(num_inputs_))
-  {
-  }
+  MultiplicativeNeuron(int id_, int num_inputs_) : NeuronBase(id_, gauss(num_inputs_)) {}
 
   virtual void update_gradient_outer(float cur_neuron_output_, float target_) override
   {
@@ -31,6 +28,7 @@ public:
       delta += downstream_last_gradient * downstream_input_weight;
     }
 
+    assert(!std::isnan(delta));
     _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
   }
 
@@ -40,13 +38,16 @@ public:
     {
       for (size_t j = i; j < upstream_layer_outputs_.size(); ++j)
       {
-          const size_t input_weight_idx = j + i *  upstream_layer_outputs_.size() - MultiplicativeNeuron::gauss(i);
+        const size_t input_weight_idx =
+            j + i * upstream_layer_outputs_.size() - MultiplicativeNeuron::gauss(i);
 
         const float weight_delta =
-            eta * upstream_layer_outputs_[i] * upstream_layer_outputs_[j] *
-            _last_gradient; //+ alpha * _input_weights_delta[input_neuron_id];
+            eta * upstream_layer_outputs_[i] * upstream_layer_outputs_[j] * _last_gradient +
+            alpha * _input_weights_delta[input_weight_idx];
 
-        // _input_weights_delta[input_neuron_id] = weight_delta;
+        assert(!std::isnan(weight_delta));
+
+        _input_weights_delta[input_weight_idx] = weight_delta;
         _input_weights[input_weight_idx] += weight_delta;
       }
     }
@@ -61,10 +62,8 @@ public:
     // return tanh(val_);
   }
 
-  static int gauss(int n)
-  {
-      return 0.5f * (n*n + n);
-  }
+  // TODO: move out to utils
+  static int gauss(int n) { return 0.5f * (n * n + n); }
 
 protected:
   virtual float activation_function_derivative(float x_) override

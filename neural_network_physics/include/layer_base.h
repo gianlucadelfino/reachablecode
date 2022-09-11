@@ -71,7 +71,7 @@ public:
   {
     for (float neuron_out : _neuron_outputs)
     {
-      std::cout << neuron_out << "values\t";
+      std::cout << neuron_out << "\t";
     }
     std::cout << std::endl;
   }
