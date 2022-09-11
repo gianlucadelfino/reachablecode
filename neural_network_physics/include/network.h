@@ -12,14 +12,10 @@ public:
     _layers.emplace_back(std::make_unique<StandardLayer>(input_size_ + 1, 0));
   }
 
-  template <typename LayerType> void add_inner_layer(int num_neurons_)
+  template <typename LayerType> void add_layer(int num_neurons_)
   {
-    add_output_layer<LayerType>(num_neurons_ + 1); // +1 is bias
-  }
-
-  template <typename LayerType> void add_output_layer(int num_neurons_)
-  {
-    _layers.emplace_back(std::make_unique<LayerType>(num_neurons_, _layers.back()->size()));
+    // + 1 is bias. NB the last later will have a bias too, but we ignore it
+    _layers.emplace_back(std::make_unique<LayerType>(num_neurons_ + 1, _layers.back()->size()));
   }
 
   std::vector<float> feed_forward(const std::vector<float>& inputs_)
@@ -40,18 +36,15 @@ public:
       _layers[i]->feed_forward(_layers[i - 1]->get_outputs());
     }
 
-    return _layers.back()->get_outputs();
+    // Copy the last layer outwithout the bias
+    std::vector<float> outputs;
+    const std::vector<float>& last_layer_outputs = _layers.back()->get_outputs();
+    assert(last_layer_outputs.size());
+    outputs.reserve(last_layer_outputs.size());
+    const auto bias_iter = std::prev(last_layer_outputs.cend());
+    std::copy(last_layer_outputs.cbegin(), bias_iter, outputs.begin());
 
-    // TODO: remove add_output_layer
-    // // Copy the last layer outwithout the bias
-    // std::vector<float> outputs;
-    // const std::vector<float>& last_layer_outputs = _layers.back()->get_outputs();
-    // assert(last_layer_outputs.size());
-    // outputs.reserve(last_layer_outputs.size());
-    // const auto bias_iter = std::prev(last_layer_outputs.cend());
-    // std::copy(last_layer_outputs.cbegin(), bias_iter, outputs.begin());
-
-    // return outputs;
+    return outputs;
   }
 
   /**
@@ -85,10 +78,10 @@ public:
 
     // Calculate overall network error (sum of squared errors)
     const auto& outputs = _layers.back()->get_outputs();
-    assert(targets_.size() == outputs.size());
+    assert(targets_.size() + 1 == outputs.size());
 
     float square_sum{};
-    for (size_t i = 0; i < outputs.size(); ++i)
+    for (size_t i = 0; i < targets_.size(); ++i)
     {
       const float delta = targets_[i] - outputs[i];
       square_sum += delta * delta;

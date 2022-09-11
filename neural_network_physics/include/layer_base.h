@@ -36,10 +36,12 @@ public:
 
   void update_gradient_outer(const std::vector<float>& expected_targets_)
   {
-    for (auto& neuron : _neurons)
+    assert(expected_targets_.size() + 1 == _neurons.size()); // +1 is the ignored bias
+    for (size_t i=0; i < expected_targets_.size(); ++i)
     {
-      neuron->update_gradient_outer(_neuron_outputs[neuron->get_id()],
-                                    expected_targets_[neuron->get_id()]);
+      auto& neuron = _neurons[i];
+      neuron->update_gradient_outer(_neuron_outputs[i],
+                                    expected_targets_[i]);
     }
   }
 

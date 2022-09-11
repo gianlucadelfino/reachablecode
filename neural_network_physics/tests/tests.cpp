@@ -26,8 +26,8 @@ void get_xor_training_data(std::vector<float>* inputs, std::vector<float>* targe
 TEST(Network, xor_learning)
 {
   Network net(2);
-  net.add_inner_layer<StandardLayer>(4);
-  net.add_output_layer<StandardLayer>(1);
+  net.add_layer<StandardLayer>(4);
+  net.add_layer<StandardLayer>(1);
 
   for (int epoch = 0; epoch < 20000; ++epoch)
   {
