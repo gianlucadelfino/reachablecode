@@ -4,6 +4,35 @@ project(neural_network_physics)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+# Conan configuration below
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+  message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+  file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
+                "${CMAKE_BINARY_DIR}/conan.cmake"
+                TLS_VERIFY ON)
+endif()
+
+include(${CMAKE_BINARY_DIR}/conan.cmake)
+
+conan_cmake_configure(REQUIRES gtest/cci.20210126
+                      GENERATORS cmake_find_package)
+
+if(WIN32)
+  set(CONAN_PROFILE ${CMAKE_SOURCE_DIR}/conan_profiles/windows)
+else()
+  set(CONAN_PROFILE "default")
+  conan_cmake_autodetect(settings)
+endif()
+
+conan_cmake_install(PATH_OR_REFERENCE .
+                    BUILD missing
+                    PROFILE ${CONAN_PROFILE}
+                    REMOTE conancenter
+                    SETTINGS ${settings})
+
 # Dependencies
 find_package(GTest REQUIRED)
 
