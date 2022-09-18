@@ -20,6 +20,7 @@ public:
     const float delta = target_ - cur_neuron_output_;
 
     _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
+    assert(!std::isnan(_last_gradient));
   }
 
   virtual void update_gradient_inner(float cur_neuron_output_,
@@ -35,10 +36,11 @@ public:
       const float downstream_input_weight = downstream_neuron->get_input_weight(_id);
 
       delta += downstream_last_gradient * downstream_input_weight;
+      assert(!std::isnan(delta));
     }
 
-    assert(!std::isnan(delta));
     _last_gradient = activation_function_derivative(cur_neuron_output_) * delta;
+    assert(!std::isnan(_last_gradient));
   }
 
   virtual void update_input_weights(const std::vector<float>& upstream_layer_outputs_) override
@@ -70,4 +72,9 @@ protected:
     const float t = tanh(x_);
     return 1 - t * t;
   }
+
+  // Learning rate
+  const float eta = .15f;
+  // Momentum coefficient
+  const float alpha = .5f;
 };

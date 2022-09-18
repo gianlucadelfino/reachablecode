@@ -14,6 +14,7 @@ public:
       _neurons.emplace_back(std::make_unique<MultiplicativeNeuron>(id, num_inputs_));
     }
   }
+
   void feed_forward(const std::vector<float>& prev_layer_outputs_) override
   {
     // TODO omp pragma
@@ -49,6 +50,7 @@ public:
       }
 
       _neuron_outputs[n] = multiplicative_sum;
+      assert(!std::isnan(_neuron_outputs[n]));
     }
   }
 };

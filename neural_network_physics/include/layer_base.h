@@ -30,18 +30,19 @@ public:
       assert(weights.size() == prev_layer_outputs_.size());
       const float inner_prod =
           std::inner_product(weights.cbegin(), weights.cend(), prev_layer_outputs_.cbegin(), 0.f);
+      assert(!std::isnan(inner_prod));
       _neuron_outputs[i] = _neurons[i]->activation_function(inner_prod);
+      assert(!std::isnan(_neuron_outputs[i]));
     }
   }
 
   void update_gradient_outer(const std::vector<float>& expected_targets_)
   {
     assert(expected_targets_.size() + 1 == _neurons.size()); // +1 is the ignored bias
-    for (size_t i=0; i < expected_targets_.size(); ++i)
+    for (size_t i = 0; i < expected_targets_.size(); ++i)
     {
       auto& neuron = _neurons[i];
-      neuron->update_gradient_outer(_neuron_outputs[i],
-                                    expected_targets_[i]);
+      neuron->update_gradient_outer(_neuron_outputs[i], expected_targets_[i]);
     }
   }
 

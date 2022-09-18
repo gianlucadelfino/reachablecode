@@ -1,11 +1,11 @@
 #pragma once
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <random>
 #include <vector>
-#include <cmath>
 
 class NeuronBase;
 using Neuron_ptr = std::unique_ptr<NeuronBase>;
@@ -16,7 +16,7 @@ public:
   NeuronBase(int id_, int num_inputs_) : _id(id_)
   {
     // Initialize all the weight randomly
-    std::default_random_engine generator(42);
+    std::default_random_engine generator(id_);
     std::uniform_real_distribution<float> distribution(0.0f, +1.0f);
 
     _input_weights.reserve(num_inputs_);
@@ -70,9 +70,4 @@ protected:
   std::vector<float> _input_weights;
   std::vector<float> _input_weights_delta;
   float _last_gradient{};
-
-  // Learning rate
-  const float eta = .15f;
-  // Momentum coefficient
-  const float alpha = .5f;
 };
