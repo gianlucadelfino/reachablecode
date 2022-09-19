@@ -17,13 +17,12 @@ public:
 
   void feed_forward(const std::vector<float>& prev_layer_outputs_) override
   {
-    // TODO omp pragma
     for (size_t n = 0; n < _neurons.size(); ++n)
     {
       const auto& weights = _neurons[n]->get_input_weights();
       // This layer should have N^2-N weights per neuron.
       const size_t num_outputs = prev_layer_outputs_.size();
-      const size_t num_input_weights = MultiplicativeNeuron::gauss(num_outputs);
+      [[maybe_unused]] const size_t num_input_weights = MultiplicativeNeuron::gauss(num_outputs);
       assert(weights.size() == num_input_weights);
 
       /*

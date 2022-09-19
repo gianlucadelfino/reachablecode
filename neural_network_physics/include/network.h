@@ -54,13 +54,13 @@ public:
    */
   void back_propagate(const std::vector<float>& targets_)
   {
-    assert(!_layers.empty());
+    assert(_layers.size() >= 2);
 
     // back propagate output layer
     _layers.back()->update_gradient_outer(targets_);
 
     // back propagate through inner layers
-    for (size_t i = 0; i + 1 < _layers.size(); ++i)
+    for (int i = static_cast<int>(_layers.size()) - 2; i >=0 ; --i)
     {
       _layers[i]->update_gradient_inner(*_layers[i + 1]);
     }

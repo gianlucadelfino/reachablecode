@@ -30,14 +30,20 @@ int main()
 {
   // Define the model
   Network net(3);
-  net.add_layer<MultiplicativeLayer>(5);
+  net.add_layer<MultiplicativeLayer>(2);
+  net.add_layer<StandardLayer>(5);
   net.add_layer<StandardLayer>(2);
 
   // Training
   std::default_random_engine generator(42);
-  std::uniform_real_distribution<float> distribution(0.0f, +1.0f);
+  std::uniform_real_distribution<float> distribution(0.0f, +1.f);
 
-  for (int epoch = 0; epoch < 50000; ++epoch)
+  // We scale the output by 100 as the network can output only 0-1 values in if a standard layer is the output,
+  // but the expected values can be bigger
+  const float scale = 0.01f;
+
+
+  for (int epoch = 0; epoch < 10000000; ++epoch)
   {
     velocity vel{distribution(generator), distribution(generator)};
     float time{distribution(generator)};
@@ -46,9 +52,9 @@ int main()
 
     const position pos = get_targets(vel, time);
 
-    const float err = net.get_cur_network_error({pos.x * .1f, pos.y * .1f});
+    const float err = net.get_cur_network_error({pos.x * scale, pos.y * scale});
 
-    if (!(epoch % 10000))
+    if (!(epoch % 100000))
     {
       Logger::Info("Epoch",
                    epoch,
@@ -59,13 +65,13 @@ int main()
                    pos.x,
                    pos.y,
                    ", outputs (",
-                   outputs[0] * 10,
-                   outputs[1] * 10,
+                   outputs[0] / scale,
+                   outputs[1] / scale,
                    "). Err:",
                    err);
     }
 
-    net.back_propagate({pos.x * .1f, pos.y * .1f});
+    net.back_propagate({pos.x * scale, pos.y * scale});
   }
 
   // Compute and dump a parabola with our NN
@@ -81,7 +87,7 @@ int main()
     const position expected_pos = get_targets(init_vel, time);
 
     const std::vector<float> outputs = net.feed_forward({init_vel.x, init_vel.y, time});
-    const position predicted_pos{10 * outputs[0], 10 * outputs[1]};
+    const position predicted_pos{outputs[0] / scale, outputs[1] / scale};
 
     out << time << "\t" << expected_pos.y << "\t" << predicted_pos.y << std::endl;
   }

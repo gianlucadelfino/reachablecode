@@ -23,7 +23,6 @@ public:
 
   virtual void feed_forward(const std::vector<float>& prev_layer_outputs_)
   {
-    // TODO omp pragma
     for (size_t i = 0; i < _neurons.size(); ++i)
     {
       const auto& weights = _neurons[i]->get_input_weights();
@@ -48,7 +47,6 @@ public:
 
   void update_gradient_inner(const LayerBase& downstream_layer_)
   {
-    // todo omp pragma
     for (auto& neuron : _neurons)
     {
       neuron->update_gradient_inner(_neuron_outputs[neuron->get_id()], downstream_layer_._neurons);
@@ -57,7 +55,6 @@ public:
 
   void update_input_weights(const LayerBase& upstream_layer_)
   {
-    // todo omp pragma
     for (auto& neuron : _neurons)
     {
       neuron->update_input_weights(upstream_layer_.get_outputs());
