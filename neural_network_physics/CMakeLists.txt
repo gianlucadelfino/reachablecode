@@ -20,12 +20,9 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_configure(REQUIRES gtest/cci.20210126
                       GENERATORS cmake_find_package)
 
-if(WIN32)
-  set(CONAN_PROFILE ${CMAKE_SOURCE_DIR}/conan_profiles/windows)
-else()
-  set(CONAN_PROFILE "default")
-  conan_cmake_autodetect(settings)
-endif()
+
+set(CONAN_PROFILE "default")
+conan_cmake_autodetect(settings)
 
 conan_cmake_install(PATH_OR_REFERENCE .
                     BUILD missing
