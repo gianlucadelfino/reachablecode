@@ -31,17 +31,15 @@ int main()
   // Define the model
   Network net(3);
   net.add_layer<MultiplicativeLayer>(2);
-  net.add_layer<StandardLayer>(5);
-  net.add_layer<StandardLayer>(2);
+  // net.add_layer<StandardLayer>(2);
 
   // Training
   std::default_random_engine generator(42);
   std::uniform_real_distribution<float> distribution(0.0f, +1.f);
 
-  // We scale the output by 100 as the network can output only 0-1 values in if a standard layer is the output,
-  // but the expected values can be bigger
+  // We scale the output by 100 as the network can output only 0-1 values in if a standard layer is
+  // the output, but the expected values can be bigger
   const float scale = 0.01f;
-
 
   for (int epoch = 0; epoch < 10000000; ++epoch)
   {
@@ -82,7 +80,7 @@ int main()
       << "Real"
       << "\t"
       << "NeuralNet" << std::endl;
-  for (float time = 0.01f; time < 1.4f; time += 0.1f)
+  for (float time = 0.01f; time < 10.f; time += 0.1f)
   {
     const position expected_pos = get_targets(init_vel, time);
 

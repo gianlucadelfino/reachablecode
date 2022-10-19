@@ -12,8 +12,8 @@ set style line 2 linecolor rgb '#dd181f' linetype 1 linewidth 2
 set xlabel 'time(s)'
 set ylabel 'y'
 
-set xrange [0:1.5]
-set yrange [0:-10]
+set xrange [0:15]
+set yrange [0:-100]
 
 # Plot
 plot 'parabola.data' using 1:2 with linespoints linestyle 1 title "real y(t)", \
