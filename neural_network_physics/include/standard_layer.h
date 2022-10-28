@@ -3,6 +3,9 @@
 #include "layer_base.h"
 #include "standard_neuron.h"
 
+/**
+ * @brief This class implements a layer of Perceptrons. See StandardNeuron docs
+ */
 class StandardLayer : public LayerBase
 {
 public:

@@ -1,65 +1,62 @@
 #pragma once
 
 #include <cassert>
-#include <cmath>
-#include <iostream>
 #include <memory>
-#include <random>
 #include <vector>
 
 class NeuronBase;
 using Neuron_ptr = std::unique_ptr<NeuronBase>;
 
+/**
+ * @brief NeuronBase defines the interface of a Neuron
+ *
+ */
 class NeuronBase
 {
 public:
-  NeuronBase(int id_, int num_inputs_) : _id(id_)
-  {
-    // Initialize all the weight randomly
-    std::default_random_engine generator(id_);
-    std::uniform_real_distribution<float> distribution(0.0f, +1.0f);
+  NeuronBase(int id_, int num_inputs_);
 
-    _input_weights.reserve(num_inputs_);
-    for (int i = 0; i < num_inputs_; ++i)
-    {
-      _input_weights.push_back(distribution(generator));
-    }
-
-    _input_weights_delta.resize(num_inputs_);
-  }
-
+  // Getters
   const std::vector<float>& get_input_weights() const { return _input_weights; }
-
-  float get_input_weight(int neuron_id_) const
-  {
-    assert(neuron_id_ < static_cast<int>(_input_weights.size()));
-    return _input_weights[neuron_id_];
-  }
-
+  float get_input_weight(int neuron_id_) const;
   int get_id() const { return _id; }
-
-  // For backpropagation...
-
   float get_last_gradient() const { return _last_gradient; }
 
+  /**
+   * @brief Update the gradients if this layer is the outer layer
+   *
+   * @param cur_neuron_output_
+   * @param target_
+   */
   virtual void update_gradient_outer(float cur_neuron_output_, float target_) = 0;
 
+  /**
+   * @brief Update the gradient if this layer is a hidden layer
+   *
+   * @param cur_neuron_output_
+   * @param downstream_neurons_
+   */
   virtual void update_gradient_inner(float cur_neuron_output_,
                                      const std::vector<Neuron_ptr>& downstream_neurons_) = 0;
 
+  /**
+   * @brief Update the input weights given the upstream layer's outputs
+   *
+   * @param upstream_layer_outputs_
+   */
   virtual void update_input_weights(const std::vector<float>& upstream_layer_outputs_) = 0;
 
-  std::ostream& operator<<(std::ostream& o)
-  {
-    for (float w : _input_weights)
-    {
-      o << w << "\t";
-    }
-    o << std::endl;
-    return o;
-  }
-
+  /**
+   * @brief Returns the value of the activation function
+   *
+   * @param val_
+   */
   virtual float activation_function(float val_) = 0;
+
+  /**
+   * @brief Prints the values of the input weights in the passed ostream
+   */
+  std::ostream& operator<<(std::ostream& o);
 
   virtual ~NeuronBase() = default;
 

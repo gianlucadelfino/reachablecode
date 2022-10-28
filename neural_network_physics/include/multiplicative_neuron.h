@@ -3,6 +3,10 @@
 #include "multiplicative_layer.h"
 #include "neuron_base.h"
 
+/**
+ * @brief This class implements the Neuron for the MultiplicativeLayer's class
+ * Neuron_n = Wn_1 aa + Wn_2 ab + Wn_3 ac + Wn_4 bb + Wn_5 bc + Wn_6 cc
+ */
 class MultiplicativeNeuron : public NeuronBase
 {
 public:

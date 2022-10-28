@@ -8,13 +8,18 @@
 #include <random>
 #include <vector>
 
+/**
+ * @brief StandardNeuron implements the "classic" Perceptron Neuron.
+ * The activation function is
+ * o_i = tanh( \Sum_j w_j h_j )
+ * where the "w_j" are the coefficients for hidden neuron's value "h_j".
+ */
 class StandardNeuron : public NeuronBase
 {
 public:
   StandardNeuron(int id_, int num_inputs_) : NeuronBase(id_, num_inputs_) {}
 
   // For backpropagation...
-
   virtual void update_gradient_outer(float cur_neuron_output_, float target_) override
   {
     const float delta = target_ - cur_neuron_output_;
@@ -66,7 +71,8 @@ public:
 
 protected:
   virtual float activation_function_derivative(float x_) override
-  { // TODO: try Relu
+  {
+    // TODO: try Relu
     // return x_? 1 : 0.01f;
     // return x_? 1 : 0;
     const float t = tanh(x_);

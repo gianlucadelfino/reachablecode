@@ -3,6 +3,15 @@
 #include "layer_base.h"
 #include "multiplicative_neuron.h"
 
+/**
+ * @brief This class implements a layer where each neuron's activation function
+ * is given by the sum of all possible second order multiplication of the each
+ * input. For instance if there are 3 input neurons "a","b" and "c", the
+ * activation function is given by
+ *
+ * Neuron_n = Wn_1 aa + Wn_2 ab + Wn_3 ac + Wn_4 bb + Wn_5 bc + Wn_6 cc
+ * where "Wn_i" are the input weights.
+ */
 class MultiplicativeLayer : public LayerBase
 {
 public:

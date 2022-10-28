@@ -20,7 +20,6 @@ include(${CMAKE_BINARY_DIR}/conan.cmake)
 conan_cmake_configure(REQUIRES gtest/cci.20210126
                       GENERATORS cmake_find_package)
 
-
 set(CONAN_PROFILE "default")
 conan_cmake_autodetect(settings)
 

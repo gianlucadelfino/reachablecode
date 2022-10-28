@@ -1,80 +1,57 @@
 #pragma once
 
-#include <algorithm>
-#include <cassert>
-#include <iostream>
-#include <memory>
-#include <random>
 #include <vector>
 
 #include "neuron_base.h"
 
+/**
+ * @brief LayerBase defines the interface for a layer.
+ *
+ */
 class LayerBase
 {
 public:
-  LayerBase(int num_neurons_, int num_inputs_)
-      : _neuron_outputs(num_neurons_), _num_inputs(num_inputs_)
-  {
-  }
+  LayerBase(int num_neurons_, int num_inputs_);
 
   ssize_t size() const { return _neurons.size(); }
 
   const std::vector<float> get_outputs() const { return _neuron_outputs; }
 
-  virtual void feed_forward(const std::vector<float>& prev_layer_outputs_)
-  {
-    for (size_t i = 0; i < _neurons.size(); ++i)
-    {
-      const auto& weights = _neurons[i]->get_input_weights();
-      assert(weights.size() == prev_layer_outputs_.size());
-      const float inner_prod =
-          std::inner_product(weights.cbegin(), weights.cend(), prev_layer_outputs_.cbegin(), 0.f);
-      assert(!std::isnan(inner_prod));
-      _neuron_outputs[i] = _neurons[i]->activation_function(inner_prod);
-      assert(!std::isnan(_neuron_outputs[i]));
-    }
-  }
+  virtual void feed_forward(const std::vector<float>& prev_layer_outputs_);
 
-  void update_gradient_outer(const std::vector<float>& expected_targets_)
-  {
-    assert(expected_targets_.size() + 1 == _neurons.size()); // +1 is the ignored bias
-    for (size_t i = 0; i < expected_targets_.size(); ++i)
-    {
-      auto& neuron = _neurons[i];
-      neuron->update_gradient_outer(_neuron_outputs[i], expected_targets_[i]);
-    }
-  }
+  /**
+   * @brief Update the gradients if this layer is the outer layer
+   *
+   * @param expected_targets_
+   */
+  void update_gradient_outer(const std::vector<float>& expected_targets_);
 
-  void update_gradient_inner(const LayerBase& downstream_layer_)
-  {
-    for (auto& neuron : _neurons)
-    {
-      neuron->update_gradient_inner(_neuron_outputs[neuron->get_id()], downstream_layer_._neurons);
-    }
-  }
+  /**
+   * @brief Update the gradient if this layer is a hidden layer
+   *
+   * @param downstream_layer_
+   */
+  void update_gradient_inner(const LayerBase& downstream_layer_);
 
-  void update_input_weights(const LayerBase& upstream_layer_)
-  {
-    for (auto& neuron : _neurons)
-    {
-      neuron->update_input_weights(upstream_layer_.get_outputs());
-    }
-  }
+  /**
+   * @brief Update the input weights. Usually called after updating the gradient
+   *
+   * @param upstream_layer_
+   */
+  void update_input_weights(const LayerBase& upstream_layer_);
 
-  void set_neurons_values(const std::vector<float>& values_)
-  {
-    assert(values_.size() <= _neuron_outputs.size());
-    std::copy(values_.cbegin(), values_.cend(), _neuron_outputs.begin());
-  }
+  /**
+   * @brief Set the neurons values
+   *
+   * @param values_
+   */
+  void set_neurons_values(const std::vector<float>& values_);
 
-  void print() const
-  {
-    for (float neuron_out : _neuron_outputs)
-    {
-      std::cout << neuron_out << "\t";
-    }
-    std::cout << std::endl;
-  }
+  /**
+   * @brief Print the current values of the neurons to stdout.
+   * (useful for debugging)
+   */
+  void print() const;
 
   virtual ~LayerBase() = default;
 
