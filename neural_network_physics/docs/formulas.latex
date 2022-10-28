@@ -24,4 +24,7 @@ E= \frac{1}{2}\sum_{i}(o_i-t_i)^2
 
 \pdv{E}{\omega^{\prime\prime}_{ij}} = \sum_{k}\pdv{E}{o_k}\pdv{o_k}{h}\pdv{h}{h^\prime}\pdv{h^\prime}{h^{\prime\prime}}
 
+h_{1}=\sum_{i \le j}{h^\prime_ih^\prime_j\omega^\prime_{ij1}}
 
+\newline
+y = - \frac{1}{2} t^2 g + v_y t
