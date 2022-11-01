@@ -7,6 +7,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include <cmath>
 
 /**
  * @brief StandardNeuron implements the "classic" Perceptron Neuron.

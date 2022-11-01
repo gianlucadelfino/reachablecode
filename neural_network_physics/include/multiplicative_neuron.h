@@ -2,6 +2,7 @@
 
 #include "multiplicative_layer.h"
 #include "neuron_base.h"
+#include <cmath>
 
 /**
  * @brief This class implements the Neuron for the MultiplicativeLayer's class

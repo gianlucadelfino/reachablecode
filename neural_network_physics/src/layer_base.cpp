@@ -6,6 +6,7 @@
 #include <memory>
 #include <random>
 #include <vector>
+#include <cmath>
 
 LayerBase::LayerBase(int num_neurons_, int num_inputs_)
     : _neuron_outputs(num_neurons_), _num_inputs(num_inputs_)
