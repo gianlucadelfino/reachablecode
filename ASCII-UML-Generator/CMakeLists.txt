@@ -30,7 +30,9 @@ endif()
 file(GLOB_RECURSE SRCS *.cpp)
 file(GLOB_RECURSE HDRS *.h)
 
-set(UTILS_HEADERS "../utils")
+set(UTILS_HEADERS "../common/include")
+
+include_directories(${UTILS_HEADERS})
 
 message(STATUS "Globbed files ${SRCS} ${HDRS}")
 

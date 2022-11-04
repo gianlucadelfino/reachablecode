@@ -30,7 +30,7 @@ int main()
     cl::Platform::get(&platforms);
     if (platforms.empty())
     {
-        throw std::runtime_error("Error getting platformas");
+        throw std::runtime_error("Error getting platforms.");
     }
 
     std::vector<cl::Device> devices;
