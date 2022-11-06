@@ -1,14 +1,25 @@
-## This is a small project to get a button in QT
+# This is a small project to get a button in QT
 
-# Requisites
-sudo apt-get install qtbase5-dev
+A minimalistic example of creating a window with a button in QT
 
-# Build
-mkdir build
-cd build
-cmake ..
-make -j
+## Requisites
 
-# Run
-./qtHelloWorld
+```
+    sudo apt-get install qtbase5-dev
+```
 
+## Build
+
+```
+    mkdir build
+    cd build
+    cmake ..
+    make -j
+```
+## Run
+```
+    ./qtHelloWorld
+```
+
+## More Info
+[ReachableCode.com](https://www.reachablecode.com)
