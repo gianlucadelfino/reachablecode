@@ -26,9 +26,9 @@ float NeuronBase::get_input_weight(int neuron_id_) const
   return _input_weights[neuron_id_];
 }
 
-std::ostream& NeuronBase::operator<<(std::ostream& o)
+std::ostream& operator<<(std::ostream& o, const NeuronBase& n)
 {
-  for (float w : _input_weights)
+  for (float w : n._input_weights)
   {
     o << w << "\t";
   }

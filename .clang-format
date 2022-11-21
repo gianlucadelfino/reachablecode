@@ -14,3 +14,4 @@ AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: true
 PenaltyReturnTypeOnItsOwnLine: 1000
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AlwaysBreakTemplateDeclarations: true

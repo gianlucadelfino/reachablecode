@@ -56,7 +56,7 @@ public:
   /**
    * @brief Prints the values of the input weights in the passed ostream
    */
-  std::ostream& operator<<(std::ostream& o);
+  friend std::ostream& operator<<(std::ostream& o, const NeuronBase&);
 
   virtual ~NeuronBase() = default;
 

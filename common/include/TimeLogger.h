@@ -30,4 +30,6 @@ private:
     std::ostream& _out;
 };
 
-
+// Some projects use snake case notation, some camel case. I need to
+// update the whole repo, but in the meanwhile I can cheat:
+using time_logger = TimeLogger;

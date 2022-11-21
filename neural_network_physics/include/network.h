@@ -12,7 +12,8 @@ class Network
 public:
   explicit Network(int input_size_);
 
-  template <typename LayerType> void add_layer(int num_neurons_)
+  template <typename LayerType>
+  void add_layer(int num_neurons_)
   {
     // + 1 is bias. NB the last later will have a bias too, but we ignore it
     _layers.emplace_back(std::make_unique<LayerType>(num_neurons_ + 1, _layers.back()->size()));

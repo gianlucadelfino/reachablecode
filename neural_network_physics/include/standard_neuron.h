@@ -3,11 +3,11 @@
 #include "neuron_base.h"
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <random>
 #include <vector>
-#include <cmath>
 
 /**
  * @brief StandardNeuron implements the "classic" Perceptron Neuron.
