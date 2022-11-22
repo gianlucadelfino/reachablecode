@@ -27,22 +27,20 @@ public:
   struct const_view
   {
     explicit operator bool() const { return _ptr; }
-
     size_t size() const { return _len; }
-
     const char* data() const { return _ptr; }
 
   private:
-    friend queue_reader;
     const_view(const char* ptr, size_t size) : _ptr(ptr), _len(size) {}
+    friend queue_reader;
     const char* _ptr;
     const size_t _len;
   };
 
   /**
    * @brief get_buffer checks if there are "bytes_to_read" avaiable to read in
-   * the queue and returns a const view to the message. The returned value can
-   * be "falsy" if there are not "bytes_to_read" to read.
+   * the queue and returns a const view to the message. The returned value has
+   * to be checked if "falsy" in case there are not "bytes_to_read" to read.
    *
    * @param bytes_to_read: the number of bytes to read.
    */

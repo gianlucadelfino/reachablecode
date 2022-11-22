@@ -15,19 +15,23 @@ public:
   struct mutable_view
   {
     explicit operator bool() const { return _ptr; }
-
     size_t size() const { return _len; }
-
     char* data() { return _ptr; }
 
   private:
     mutable_view(char* ptr, size_t size) : _ptr(ptr), _len(size) {}
     friend queue_writer;
-
     char* _ptr;
     const size_t _len;
   };
 
+  /**
+   * @brief get_buffer checks if there are "bytes_to_write" avaiable to read in
+   * the queue and returns a mutable view to the message. The returned view has
+   * to be checked if "falsy" in case there are not "bytes_to_write" to read.
+   *
+   * @param bytes_to_write: the number of bytes to write.
+   */
   mutable_view get_buffer(size_t bytes_to_write);
 
   /**
