@@ -10,18 +10,15 @@
 
 #include "CountdownTimer.h"
 #include "InputBuffer.h"
-#include "LockFreeSpsc.h"
 #include "Logger.h"
 #include "OpenCVUtils.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
+#include "lockfree_spsc.h"
 
 struct FrameStitcher
 {
-  explicit FrameStitcher(int parts_num_)
-      : _parts_num(parts_num_), _image_buffer(5 * MB)
-  {
-  }
+  explicit FrameStitcher(int parts_num_) : _parts_num(parts_num_), _image_buffer(5 * MB) {}
 
   FrameStitcher(FrameStitcher&&) = default;
 
@@ -44,7 +41,7 @@ struct FrameStitcher
     return cv::imdecode(_image_buffer, cv::IMREAD_UNCHANGED);
   }
 
-  private:
+private:
   int _parts_num;
   std::vector<uchar> _image_buffer;
 };
@@ -54,8 +51,7 @@ struct FramesManager
   void add(const InputBuffer::Header& h_, ::asio::const_buffer part_)
   {
     const int old_frame_allowance = 10;
-    if (h_.frame_id < _last_frame_id - old_frame_allowance or
-        h_.frame_id < _last_complete_frame)
+    if (h_.frame_id < _last_frame_id - old_frame_allowance or h_.frame_id < _last_complete_frame)
     {
       // Too old, throw it away
       Logger::Debug("Got old frame", h_.frame_id, ". Discarded");
@@ -74,10 +70,7 @@ struct FramesManager
     {
       // TimeLogger t("New frame found: " + std::to_string(h_.frame_id),
       //            std::cout);
-      frameIter = _frames
-                      .insert(std::make_pair(h_.frame_id,
-                                             FrameStitcher(h_.total_parts)))
-                      .first;
+      frameIter = _frames.insert(std::make_pair(h_.frame_id, FrameStitcher(h_.total_parts))).first;
     }
 
     auto& frameStitcher = frameIter->second;
@@ -116,7 +109,7 @@ struct FramesManager
     return frame_stitcher.decoded();
   }
 
-  private:
+private:
   int _last_cleaned{};
   int _last_complete_frame{-1};
   int _last_frame_id{};
@@ -137,23 +130,21 @@ void receiver(const std::string& recv_address_)
 
     InputBuffer input_buffer;
 
-    ::asio::ip::udp::endpoint recv_endpoint(
-        ::asio::ip::address::from_string(recv_address_), recv_port);
+    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::address::from_string(recv_address_),
+                                            recv_port);
 
     recv_socket.open(::asio::ip::udp::v4());
 
     recv_socket.bind(recv_endpoint);
 
-    LockFreeSpsc<InputBuffer> disruptor(10000);
+    lockfree_spsc<InputBuffer> disruptor(10000);
 
     struct Handler
     {
       Handler(::asio::ip::udp::socket& socket_,
               InputBuffer& input_buffer_,
-              LockFreeSpsc<InputBuffer>& disruptor_)
-          : _socket(socket_),
-            _input_buffer(input_buffer_),
-            _disruptor(disruptor_)
+              lockfree_spsc<InputBuffer>& disruptor_)
+          : _socket(socket_), _input_buffer(input_buffer_), _disruptor(disruptor_)
       {
       }
 
@@ -191,81 +182,81 @@ void receiver(const std::string& recv_address_)
           // Output Stats every second
           if (timer.is_it_time_yet())
           {
-            Logger::Info(
-                "Streaming Rate", recv_bytes_per_second / 1000.f, "KB/s");
+            Logger::Info("Streaming Rate", recv_bytes_per_second / 1000.f, "KB/s");
             recv_bytes_per_second = 0;
           }
         }
       }
 
-  private:
+    private:
       ::asio::ip::udp::socket& _socket;
       InputBuffer& _input_buffer;
-      LockFreeSpsc<InputBuffer>& _disruptor;
+      lockfree_spsc<InputBuffer>& _disruptor;
     };
 
     Handler handler(recv_socket, input_buffer, disruptor);
     recv_socket.async_receive(input_buffer.data(), handler);
 
-    std::thread display_frame_thread([&disruptor, &recv_socket] {
-      try
-      {
-        while (true)
+    std::thread display_frame_thread(
+        [&disruptor, &recv_socket]
         {
-          static FramesManager frame_manager;
-          static cv::Mat frame;
-
-          InputBuffer part_buf;
-          while (disruptor.try_pop(part_buf))
+          try
           {
-            auto [header, part] = part_buf.parse();
-            Logger::Debug("Received", header);
-
-            frame_manager.add(header, part);
-
-            if (frame_manager.is_frame_ready())
+            while (true)
             {
-              Logger::Debug("Updating Frame");
-              frame = frame_manager.get_last_frame();
+              static FramesManager frame_manager;
+              static cv::Mat frame;
+
+              InputBuffer part_buf;
+              while (disruptor.try_pop(part_buf))
+              {
+                auto [header, part] = part_buf.parse();
+                Logger::Debug("Received", header);
+
+                frame_manager.add(header, part);
+
+                if (frame_manager.is_frame_ready())
+                {
+                  Logger::Debug("Updating Frame");
+                  frame = frame_manager.get_last_frame();
+                }
+              }
+
+              static float scale = 1.f;
+
+              if (!frame.empty())
+              {
+                opencv_utils::displayMat(frame, "recv", scale);
+              }
+
+              // Press  ESC on keyboard to  exit
+              const char c = static_cast<char>(cv::waitKey(1));
+              std::this_thread::sleep_for(std::chrono::milliseconds(1));
+              if (c == 43) // +
+              {
+                scale = std::min(2.f, scale + .2f);
+                Logger::Info("Image scale set to", scale);
+              }
+              else if (c == 45) // -
+              {
+                scale = std::max(.2f, scale - .2f);
+                Logger::Info("Image scale set to", scale);
+              }
+              else if (c == 27)
+              {
+                recv_socket.close();
+                break;
+              }
             }
           }
-
-          static float scale = 1.f;
-
-          if (!frame.empty())
+          catch (const std::exception& e_)
           {
-            opencv_utils::displayMat(frame, "recv", scale);
+            Logger::Error("Receiver Error: ", e_.what());
           }
+        });
 
-          // Press  ESC on keyboard to  exit
-          const char c = static_cast<char>(cv::waitKey(1));
-          std::this_thread::sleep_for(std::chrono::milliseconds(1));
-          if (c == 43) // +
-          {
-            scale = std::min(2.f, scale + .2f);
-            Logger::Info("Image scale set to", scale);
-          }
-          else if (c == 45) // -
-          {
-            scale = std::max(.2f, scale - .2f);
-            Logger::Info("Image scale set to", scale);
-          }
-          else if (c == 27)
-          {
-            recv_socket.close();
-            break;
-          }
-        }
-      }
-      catch (const std::exception& e_)
-      {
-        Logger::Error("Receiver Error: ", e_.what());
-      }
-    });
-
-    Logger::Info("Waiting for connections on",
-                 recv_endpoint.address().to_string(),
-                 recv_endpoint.port());
+    Logger::Info(
+        "Waiting for connections on", recv_endpoint.address().to_string(), recv_endpoint.port());
     ioContext.run();
     if (display_frame_thread.joinable())
     {

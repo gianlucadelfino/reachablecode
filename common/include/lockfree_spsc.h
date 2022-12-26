@@ -2,16 +2,26 @@
 
 #include <atomic>
 #include <iostream>
+#include <new>
 #include <type_traits>
 #include <vector>
+
+#ifdef __cpp_lib_hardware_interference_size
+using std::hardware_destructive_interference_size;
+#else
+// 64 bytes on x86-64 │ L1_CACHE_BYTES │ L1_CACHE_SHIFT │ __cacheline_aligned │
+// ...
+constexpr std::size_t hardware_destructive_interference_size = 64;
+#endif
 
 #define CACHE_LINE_SIZE 128
 
 // A simplified version of folly::ProducerConsumerQueue
-template <typename T> class LockFreeSpsc
+template <typename T>
+class lockfree_spsc
 {
-  public:
-  LockFreeSpsc(size_t ring_size_)
+public:
+  explicit lockfree_spsc(size_t ring_size_)
       : _next_read_idx(0),
         _next_write_idx(0),
         _ring(ring_size_ + 1) // one is wasted.
@@ -21,8 +31,8 @@ template <typename T> class LockFreeSpsc
                   std::is_move_constructible_v<T>);
   }
 
-  LockFreeSpsc(const LockFreeSpsc&) = delete;
-  LockFreeSpsc(LockFreeSpsc&&) = delete ;
+  lockfree_spsc(const lockfree_spsc&) = delete;
+  lockfree_spsc(lockfree_spsc&&) = delete;
 
   bool try_push(T&& t_)
   {
@@ -59,7 +69,7 @@ template <typename T> class LockFreeSpsc
     }
 
     int new_reader_idx = cur_reader_idx + 1;
-    if (new_reader_idx ==  static_cast<int>(_ring.size()))
+    if (new_reader_idx == static_cast<int>(_ring.size()))
     {
       new_reader_idx = 0;
     }
@@ -82,11 +92,11 @@ template <typename T> class LockFreeSpsc
     }
   }
 
-  private:
-  std::atomic_int _next_read_idx;
-  char padding1[CACHE_LINE_SIZE - sizeof(std::atomic_int)];
-  std::atomic_int _next_write_idx;
-  char padding2[CACHE_LINE_SIZE - sizeof(std::atomic_int)];
+private:
+  alignas(hardware_destructive_interference_size) std::atomic_uint64_t
+      _next_read_idx{};
+  alignas(hardware_destructive_interference_size) std::atomic_uint64_t
+      _next_write_idx{};
 
   std::vector<T> _ring;
 };

@@ -12,10 +12,10 @@
 
 #include "CountdownTimer.h"
 #include "InputBuffer.h"
-#include "LockFreeSpsc.h"
 #include "OpenCVUtils.h"
 #include "TimeLogger.h"
 #include "VideoWindow.h"
+#include "lockfree_spsc.h"
 
 void sender(const std::string& recv_address_)
 {
@@ -30,8 +30,8 @@ void sender(const std::string& recv_address_)
     sender_socket.open(::asio::ip::udp::v4());
 
     const int recv_port = 39009;
-    ::asio::ip::udp::endpoint recv_endpoint(
-        ::asio::ip::address::from_string(recv_address_), recv_port);
+    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::address::from_string(recv_address_),
+                                            recv_port);
 
     VideoWindow win(0, "cUDP");
     std::vector<int> compression_params;
@@ -51,8 +51,7 @@ void sender(const std::string& recv_address_)
 
     while (true)
     {
-      const auto timepoint_before_compression =
-          std::chrono::system_clock::now();
+      const auto timepoint_before_compression = std::chrono::system_clock::now();
       cv::Mat frame = win.getFrame();
       // If the frame is empty, break immediately
       if (frame.empty())
@@ -73,8 +72,7 @@ void sender(const std::string& recv_address_)
 
       Logger::Debug("Frame Size", buffer.size());
       const int16_t parts_num =
-          (buffer.size() + InputBuffer::writable_size() - 1) /
-          InputBuffer::writable_size();
+          (buffer.size() + InputBuffer::writable_size() - 1) / InputBuffer::writable_size();
       Logger::Debug("Frame id", frame_id, "split in parts", parts_num);
       for (int16_t part_id = 0; part_id < parts_num; ++part_id)
       {
@@ -85,16 +83,14 @@ void sender(const std::string& recv_address_)
         h.frame_id = frame_id;
         h.part_begin = part_id * InputBuffer::writable_size();
 
-        h.part_size = part_id + 1 == parts_num ?
-                          buffer.size() % InputBuffer::writable_size() :
-                          InputBuffer::writable_size();
+        h.part_size = part_id + 1 == parts_num ? buffer.size() % InputBuffer::writable_size() :
+                                                 InputBuffer::writable_size();
 
         InputBuffer input_buffer;
         input_buffer.set_header(h);
-        input_buffer.set_frame_part(
-            ::asio::const_buffer(reinterpret_cast<const char*>(buffer.data()) +
-                                     part_id * InputBuffer::writable_size(),
-                                 InputBuffer::writable_size()));
+        input_buffer.set_frame_part(::asio::const_buffer(
+            reinterpret_cast<const char*>(buffer.data()) + part_id * InputBuffer::writable_size(),
+            InputBuffer::writable_size()));
 
         std::error_code err;
         sent_bytes_per_second +=
@@ -106,21 +102,17 @@ void sender(const std::string& recv_address_)
       }
 
       // Display the resulting frame
-      opencv_utils::displayMat(cv::imdecode(buffer, cv::IMREAD_UNCHANGED),
-                               win.getWindowName());
+      opencv_utils::displayMat(cv::imdecode(buffer, cv::IMREAD_UNCHANGED), win.getWindowName());
 
       const auto timepoint_after_sending = std::chrono::system_clock::now();
-      auto frame_duration =
-          (timepoint_after_sending - timepoint_before_compression);
+      auto frame_duration = (timepoint_after_sending - timepoint_before_compression);
 
-      const auto ms_per_update =
-          std::chrono::milliseconds(static_cast<int>(1000 / fps));
+      const auto ms_per_update = std::chrono::milliseconds(static_cast<int>(1000 / fps));
 
       if (frame_duration < ms_per_update)
       {
         auto sleep_duration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                ms_per_update - frame_duration);
+            std::chrono::duration_cast<std::chrono::milliseconds>(ms_per_update - frame_duration);
 
         Logger::Debug("Sleep for", sleep_duration.count());
         std::this_thread::sleep_for(sleep_duration);

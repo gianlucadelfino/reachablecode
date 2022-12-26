@@ -50,10 +50,7 @@ struct InputBuffer
 
   static size_t size() { return MTU; }
 
-  void set_header(const Header& h_)
-  {
-    memcpy(_recv_buff.data(), &h_, sizeof(h_));
-  }
+  void set_header(const Header& h_) { memcpy(_recv_buff.data(), &h_, sizeof(h_)); }
 
   void set_frame_part(::asio::const_buffer buf_)
   {
@@ -73,11 +70,10 @@ struct InputBuffer
     return ::asio::const_buffer(_recv_buff.data(), _recv_buff.size());
   }
 
-  private:
+private:
   ::asio::const_buffer get_frame_part(size_t part_size_) const
   {
     return ::asio::const_buffer(_recv_buff.data() + sizeof(Header), part_size_);
   }
   std::array<char, MTU> _recv_buff{0};
 };
-
