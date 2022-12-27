@@ -1,6 +1,7 @@
 #pragma once
 
 #include <exception>
+#include <stdexcept>
 #include <string>
 
 #include "opencv2/opencv.hpp"
