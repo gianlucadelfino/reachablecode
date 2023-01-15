@@ -20,3 +20,17 @@ target_link_libraries(
   GLEW::GLEW
   glfw::glfw
 )
+
+if(BUILD_WASM)
+  set_target_properties(video_chat PROPERTIES SUFFIX ".html" LINK_FLAGS
+                                                                  "--emrun")
+  install(
+    TARGETS video_chat
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
+
+  install(FILES ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/video_chat.js
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/video_chat.wasm
+          DESTINATION bin)
+endif()

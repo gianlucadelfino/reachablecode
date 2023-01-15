@@ -1,0 +1,50 @@
+[requires]
+gtest/cci.20210126
+ffmpeg/4.4
+opencv/4.5.5
+tensorflow-lite/2.10.0
+eigen/3.4.0
+imgui/1.89.1
+#glfw/3.3.8
+glew/2.2.0
+[generators]
+virtualenv
+
+[imports]
+./res/bindings, imgui_impl_glfw* -> ./bindings
+./res/bindings, imgui_impl_opengl3* -> ./bindings
+
+bin, *.html -> ./bin
+bin, *.wasm -> ./bin
+bin, *.js -> ./bin
+
+[options]
+opencv:with_jpeg=False
+opencv:dnn=False
+opencv:with_tiff=False
+opencv:with_jpeg2000=False
+opencv:with_quirc=False
+opencv:with_ipp=False
+opencv:with_ade=False
+ffmpeg:with_zlib=False
+ffmpeg:with_bzip2=False
+ffmpeg:with_lzma=False
+ffmpeg:with_libiconv=False
+ffmpeg:with_freetype=False
+ffmpeg:with_openjpeg=False
+ffmpeg:with_openh264=False
+ffmpeg:with_opus=False
+ffmpeg:with_vorbis=False
+ffmpeg:with_zeromq=False
+ffmpeg:with_sdl=False
+ffmpeg:with_libx264=False
+ffmpeg:with_libx265=False
+ffmpeg:with_libvpx=False
+ffmpeg:with_libmp3lame=False
+ffmpeg:with_libfdk_aac=False
+ffmpeg:with_libwebp=False
+ffmpeg:with_ssl=False
+ffmpeg:with_programs=False
+tensorflow-lite:with_xnnpack=False
+tensorflow-lite:with_ruy=False
+

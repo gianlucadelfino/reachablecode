@@ -43,7 +43,7 @@ int main()
     imgui_window_manager window_manager("Test win", win_width, win_height);
 
     window_manager.add_ui_elem(
-        [&webcam, buf = std::array<char, 20>{}, texture = utils::gen_texture()]() mutable
+        [&webcam, buf = std::array<char, 20>{}, texture_ptr = utils::gen_texture()]() mutable
         {
           cv::Mat frame;
           webcam >> frame;
@@ -52,9 +52,8 @@ int main()
 
           if (!frame.empty())
           {
-            utils::load_texture(frame, texture);
-
-            ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(texture)),
+            utils::load_texture(frame, texture_ptr);
+            ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(texture_ptr)),
                          ImVec2(frame.cols, frame.rows));
           }
           else
