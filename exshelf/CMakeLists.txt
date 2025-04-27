@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.6)
 
 project(exshelf)
 
@@ -11,8 +11,17 @@ find_package(PkgConfig REQUIRED)
 # pthread
 find_package(Threads)
 
+include(FetchContent)
+
 # OpenCv
-find_package(OpenCV 4 REQUIRED)
+FetchContent_Declare(
+        opencv
+        GIT_REPOSITORY https://github.com/opencv/opencv.git
+        GIT_TAG        4.11.0
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(opencv)
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}")
 # Tesseract
@@ -29,16 +38,8 @@ set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
 set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
 
 # ftrapv checks for overflow and crashes the program if it happens.
-set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv")
+set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv -fsanitize=undefined,address")
 
-#set(GCC_SANITIZE_FLAGS "-fsanitize=undefined,address")
-#set(LSAN_OPTIONS "verbosity=1:log_threads=1")
-
-# We use clang to be able to backlist some sanitizers errors from
-# libfontconfig
-set(CMAKE_CXX_COMPILER /usr/bin/clang)
-set(CLANG_LINK_LIBS "stdc++" "ubsan")
-set(MATH_LIBS "m")
 set (CMAKE_CXX_STANDARD 17)
 
 # Change this for release
@@ -58,6 +59,31 @@ set(SRCS src/main.cpp)
 
 add_executable(exshelf ${SRCS} ${HDRS})
 
-target_link_libraries(exshelf ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-
 include_directories(SYSTEM ${LOCAL_INCLUDE} ${3RD_PARTIES_INCLUDE} ${TESSERACT_INCLUDE_DIR} ${COMMON_INCLUDE})
+
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
+
+target_include_directories(exshelf PRIVATE
+  ${opencv_SOURCE_DIR}/include
+  ${OPENCV_CONFIG_FILE_INCLUDE_DIR}
+  ${OPENCV_MODULE_opencv_core_LOCATION}/include
+  ${OPENCV_MODULE_opencv_highgui_LOCATION}/include
+  ${OPENCV_MODULE_opencv_calib3d_LOCATION}/include
+  ${OPENCV_MODULE_opencv_features2d_LOCATION}/include
+  ${OPENCV_MODULE_opencv_flann_LOCATION}/include
+  ${OPENCV_MODULE_opencv_dnn_LOCATION}/include
+  ${OPENCV_MODULE_opencv_imgcodecs_LOCATION}/include
+  ${OPENCV_MODULE_opencv_videoio_LOCATION}/include
+  ${OPENCV_MODULE_opencv_imgproc_LOCATION}/include
+  ${OPENCV_MODULE_opencv_ml_LOCATION}/include
+  ${OPENCV_MODULE_opencv_objdetect_LOCATION}/include
+  ${OPENCV_MODULE_opencv_photo_LOCATION}/include
+  ${OPENCV_MODULE_opencv_stitching_LOCATION}/include
+  ${OPENCV_MODULE_opencv_video_LOCATION}/include
+)
+
+target_link_libraries(exshelf opencv_core opencv_highgui opencv_dnn ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
