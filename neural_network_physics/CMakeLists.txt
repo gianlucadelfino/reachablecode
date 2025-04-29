@@ -1,36 +1,8 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.24.1)
 project(neural_network_physics)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
-
-# Conan configuration below
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-  message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-  file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
-                "${CMAKE_BINARY_DIR}/conan.cmake"
-                TLS_VERIFY ON)
-endif()
-
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-conan_cmake_configure(REQUIRES gtest/cci.20210126
-                      GENERATORS cmake_find_package)
-
-set(CONAN_PROFILE "default")
-conan_cmake_autodetect(settings)
-
-conan_cmake_install(PATH_OR_REFERENCE .
-                    BUILD missing
-                    PROFILE ${CONAN_PROFILE}
-                    REMOTE conancenter
-                    SETTINGS ${settings})
-
-# Dependencies
-find_package(GTest REQUIRED)
 
 # pthread
 find_package (Threads)
@@ -43,9 +15,17 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
     message(STATUS "No CMAKE_BUILD_TYPE specified, using Release")
 endif()
 
-if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(FATAL_ERROR "CMAKE_BUILD_TYPE error. Only 'Debug' and 'Release' build type are supported")
-endif()
+include(FetchContent)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+set(BUILD_GTEST ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+FetchContent_MakeAvailable(googletest)
+include(GoogleTest)
 
 add_compile_options("$<$<CONFIG:RELEASE>:-Wall;-Wextra;-pedantic;-Werror>")
 # ftrapv checks for overflow and crashes the program if it happens.

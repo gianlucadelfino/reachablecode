@@ -9,10 +9,14 @@ A small example that creates a Monte Carlo simulation with OpenCL
 ```
 
 ```
+    sudo apt install ocl-icd-opencl-dev
+```
+
+```
     mkdir build
     cd build
     cmake ../
-    make
+    cmake --build .
 ```
 
 ## Running it

@@ -54,7 +54,7 @@ public:
 
     void printOnScreen(int x_, int y_, const std::string& message_) const
     {
-        mvprintw(y_, x_, message_.c_str());
+        mvprintw(y_, x_, message_.c_str(), "%s");
     }
 
     void refresh() { ::refresh(); }

@@ -130,7 +130,7 @@ void receiver(const std::string& recv_address_)
 
     InputBuffer input_buffer;
 
-    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::address::from_string(recv_address_),
+    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::make_address(recv_address_),
                                             recv_port);
 
     recv_socket.open(::asio::ip::udp::v4());

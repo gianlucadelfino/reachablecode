@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.24.1)
 
 project(exshelf)
 
 # This will display the full g++ command in the output.
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Dipendencies
+# Dependencies
 find_package(PkgConfig REQUIRED)
 
 # pthread
@@ -45,14 +45,6 @@ set (CMAKE_CXX_STANDARD 17)
 # Change this for release
 set(CMAKE_BUILD_TYPE "debug")
 
-if(CMAKE_BUILD_TYPE MATCHES "[Rr][Ee][Ll][Ee][Aa][Ss][Ee]")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
-elseif(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]" OR CMAKE_BUILD_TYPE STREQUAL "")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS} ${GCC_SANITIZE_FLAGS} ${GCC_DEBUG_FLAGS}")
-elseif(CMAKE_BUILD_TYPE MATCHES "[Pp][Rr][Oo][Ff][Ii][Ll][Ee]")
-    set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} -O1 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
-endif()
-
 configure_file(res/shelfTest2_small.jpg shelfTest2_small.jpg COPYONLY)
 
 set(SRCS src/main.cpp)
@@ -60,12 +52,6 @@ set(SRCS src/main.cpp)
 add_executable(exshelf ${SRCS} ${HDRS})
 
 include_directories(SYSTEM ${LOCAL_INCLUDE} ${3RD_PARTIES_INCLUDE} ${TESSERACT_INCLUDE_DIR} ${COMMON_INCLUDE})
-
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-    message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
 
 target_include_directories(exshelf PRIVATE
   ${opencv_SOURCE_DIR}/include
@@ -86,4 +72,4 @@ target_include_directories(exshelf PRIVATE
   ${OPENCV_MODULE_opencv_video_LOCATION}/include
 )
 
-target_link_libraries(exshelf opencv_core opencv_highgui opencv_dnn ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(exshelf opencv_core opencv_highgui opencv_dnn ${OpenCV_LIBS} ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})

@@ -1,60 +1,54 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.24.1)
 
 project(cUDP)
 
 # This will display the full g++ command in the output.
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-include(${CMAKE_BINARY_DIR}/conan_paths.cmake OPTIONAL)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,address")
 
-# Dipendencies
-if(!WIN32)
-    find_package(PkgConfig REQUIRED)
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 # pthread
 find_package(Threads)
 
-if(WIN32)
-    set(OpenCV_DIR "C:/OpenCV-4.1.1/")
-endif()
+include(FetchContent)
 
 # OpenCv
-find_package(OpenCV REQUIRED)
+FetchContent_Declare(
+        opencv
+        GIT_REPOSITORY https://github.com/opencv/opencv.git
+        GIT_TAG        4.11.0
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(opencv)
+
+FetchContent_Declare(asio
+  GIT_REPOSITORY git@github.com:chriskohlhoff/asio.git
+  GIT_TAG asio-1-34-2
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+)
+
+FetchContent_MakeAvailable(asio)
+
+add_library(asio INTERFACE)
+target_include_directories(asio INTERFACE ${asio_SOURCE_DIR}/asio/include)
+find_package(Threads)
+target_link_libraries(asio INTERFACE Threads::Threads)
 
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "../3rdParties")
 
-set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
-
 # ftrapv checks for overflow and crashes the program if it happens.
-set(GCC_DEBUG_FLAGS " -O0 -g -ftrapv")
+set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv -fsanitize=undefined,address")
 
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
-
-if(!WIN32)
-  # NB Blacklist for libfontconfig
-  configure_file(sanitizer_blacklist.txt sanitizer_blacklist.txt COPYONLY)
-
-  set(LSAN_OPTIONS "verbosity=1:log_threads=1")
-  set(GCC_SANITIZE_FLAGS "-fsanitize=undefined,address")
-  set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-  set(CLANG_LINK_LIBS "stdc++" "ubsan")
-endif()
-
-set(GCC_DIALECT_FLAGS "-std=c++17")
-
-# Change this for release
-set(CMAKE_BUILD_TYPE "release")
-
-if(CMAKE_BUILD_TYPE MATCHES "[Rr][Ee][Ll][Ee][Aa][Ss][Ee]")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
-elseif(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]" OR CMAKE_BUILD_TYPE STREQUAL "")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS} ${GCC_SANITIZE_FLAGS} ${GCC_DEBUG_FLAGS}")
-elseif(CMAKE_BUILD_TYPE MATCHES "[Pp][Rr][Oo][Ff][Ii][Ll][Ee]")
-    set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} -O1 -DNDEBUG ${GCC_WARNING_FLAGS} ${GCC_DIALECT_FLAGS}")
-endif()
 
 set(SRCSSender src/sender.cpp)
 set(SRCSReceiver src/receiver.cpp)
@@ -63,12 +57,27 @@ add_executable(cUDPsender ${SRCSSender})
 
 add_executable(cUDPreceiver ${SRCSReceiver})
 
-if(WIN32)
-  set(WINSOCK_LIBS "wsock32;ws2_32")
-  set(WIN_ASIO_INCLUDES "C:/asio-1.18.0/include")
-endif()
+target_link_libraries(cUDPsender asio opencv_core opencv_highgui opencv_dnn ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(cUDPreceiver asio opencv_core opencv_highgui opencv_dnn ${CMAKE_THREAD_LIBS_INIT})
 
-target_link_libraries(cUDPsender ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS})
-target_link_libraries(cUDPreceiver ${OpenCV_LIBS} ${CLANG_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${WINSOCK_LIBS})
+include_directories(SYSTEM ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
 
-include_directories(SYSTEM "include" ${WIN_ASIO_INCLUDES} ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
+include_directories(PRIVATE
+  "include"
+  ${opencv_SOURCE_DIR}/include
+  ${OPENCV_CONFIG_FILE_INCLUDE_DIR}
+  ${OPENCV_MODULE_opencv_core_LOCATION}/include
+  ${OPENCV_MODULE_opencv_highgui_LOCATION}/include
+  ${OPENCV_MODULE_opencv_calib3d_LOCATION}/include
+  ${OPENCV_MODULE_opencv_features2d_LOCATION}/include
+  ${OPENCV_MODULE_opencv_flann_LOCATION}/include
+  ${OPENCV_MODULE_opencv_dnn_LOCATION}/include
+  ${OPENCV_MODULE_opencv_imgcodecs_LOCATION}/include
+  ${OPENCV_MODULE_opencv_videoio_LOCATION}/include
+  ${OPENCV_MODULE_opencv_imgproc_LOCATION}/include
+  ${OPENCV_MODULE_opencv_ml_LOCATION}/include
+  ${OPENCV_MODULE_opencv_objdetect_LOCATION}/include
+  ${OPENCV_MODULE_opencv_photo_LOCATION}/include
+  ${OPENCV_MODULE_opencv_stitching_LOCATION}/include
+  ${OPENCV_MODULE_opencv_video_LOCATION}/include
+)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.24.1)
 project(almost_always_lockfree CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -7,49 +7,34 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Conan configuration below
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-  message(
-    STATUS
-      "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-  file(
-    DOWNLOAD
-    "https://raw.githubusercontent.com/conan-io/cmake-conan/0.18.1/conan.cmake"
-    "${CMAKE_BINARY_DIR}/conan.cmake" TLS_VERIFY ON)
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-conan_cmake_configure(
-  REQUIRES
-  gtest/cci.20210126
-  REQUIRES
-  fmt/9.1.0
-  REQUIRES
-  tclap/1.2.5
-  GENERATORS
-  cmake_find_package)
-
-conan_cmake_autodetect(settings)
-
-conan_cmake_install(
-  PATH_OR_REFERENCE
-  .
-  BUILD
-  missing
-  REMOTE
-  conancenter
-  SETTINGS
-  ${settings})
-
-# Dependencies
-find_package(GTest REQUIRED)
-find_package(fmt REQUIRED)
+# pthread
 find_package(Threads)
-find_package(tclap REQUIRED)
+
+include(FetchContent)
+
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
+set(BUILD_GTEST ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+include(GoogleTest)
+
+set(FMT_TEST OFF CACHE INTERNAL "disabling fmt tests")
+FetchContent_Declare(
+        fmt
+        GIT_REPOSITORY  https://github.com/fmtlib/fmt.git
+        GIT_TAG         9.1.0
+        GIT_PROGRESS    TRUE
+        USES_TERMINAL_DOWNLOAD TRUE
+)
+FetchContent_MakeAvailable(fmt)
 
 add_compile_options("$<$<CONFIG:RELEASE>:-Wall;-Wextra;-pedantic;-Werror>")
 # ftrapv checks for overflow and crashes the program if it happens.

@@ -30,7 +30,7 @@ void sender(const std::string& recv_address_)
     sender_socket.open(::asio::ip::udp::v4());
 
     const int recv_port = 39009;
-    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::address::from_string(recv_address_),
+    ::asio::ip::udp::endpoint recv_endpoint(::asio::ip::make_address(recv_address_),
                                             recv_port);
 
     VideoWindow win(0, "cUDP");

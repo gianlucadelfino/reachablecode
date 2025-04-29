@@ -5,16 +5,14 @@ A minimalistic example of creating a window with a button in QT
 ## Requisites
 
 ```
-    sudo apt-get install qtbase5-dev
+    sudo apt install qtbase5-dev
 ```
 
 ## Build
 
 ```
-    mkdir build
-    cd build
-    cmake ..
-    make -j
+    cmake -B build
+    cmake --build build
 ```
 ## Run
 ```

@@ -15,14 +15,6 @@ twice and making sure the two mappings are next to one another. This is what
 this project accomplishes.
 
 ## How to build
-The project can be built only on Linux. The only real dependency is
-Conan that can be installed via
-
-```
-    pip install conan
-```
-Once conan is installed
-
 ```
     mkdir build
     cd build
