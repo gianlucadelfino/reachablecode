@@ -1,9 +1,8 @@
+#include <concepts>
+
 template <typename T> concept Shape = requires(const T& t)
 {
-    {
-        t.area()
-    }
-    ->float;
+    { t.area() } -> std::convertible_to<float>;
 };
 
 template <class T> struct ShapeBase
