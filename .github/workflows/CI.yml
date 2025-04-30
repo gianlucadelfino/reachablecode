@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: doubly_mapped_lockfree_queue_build
-      run: cd doubly_mapped_lockfree_queue && cmake -B build -CMAKE_BUILD_TYPE=Debug
+      run: cd doubly_mapped_lockfree_queue && cmake -B build -DCMAKE_BUILD_TYPE=Debug
     - name: doubly_mapped_lockfree_queue_test
       run: ctest --test-dir build
