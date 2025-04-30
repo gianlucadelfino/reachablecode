@@ -28,7 +28,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(opencv)
 
 FetchContent_Declare(asio
-  GIT_REPOSITORY git@github.com:chriskohlhoff/asio.git
+  GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
   GIT_TAG asio-1-34-2
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
