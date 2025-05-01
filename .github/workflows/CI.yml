@@ -14,24 +14,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: ASCII-UML-Generator
-      run: cd ASCII-UML-Generator && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd ASCII-UML-Generator && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: allocCatcher
-      run: cd allocCatcher && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd allocCatcher && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: almost_always_lockfree
-      run: cd almost_always_lockfree && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd almost_always_lockfree && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: conceptsInterfaces
-      run: cd conceptsInterfaces && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd conceptsInterfaces && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: cudp
-      run: cd cudp && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd cudp && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: doubly_mapped_lockfree_queue_build
-      run: cd doubly_mapped_lockfree_queue && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd doubly_mapped_lockfree_queue && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: exshelf
-      run: cd exshelf && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd exshelf && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: neural_network_physics_build
-      run: cd neural_network_physics && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd neural_network_physics && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: qtHelloWorld
-      run: cd qtHelloWorld && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd qtHelloWorld && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: simple_parser
-      run: cd simple_parser && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd simple_parser && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: simple_thread_pool
-      run: cd simple_thread_pool && cmake -B build -DFETCHCONTENT_BASE_DIR=3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+      run: cd simple_thread_pool && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build

@@ -14,11 +14,12 @@ a webcam and builds up a list.
     cmake --build build
 
     cd build
+    wget https://raw.githubusercontent.com/tesseract-ocr/tessdata/refs/heads/main/ita.traineddata
     wget https://www.dropbox.com/s/r2ingd0l3zt8hxs/frozen_east_text_detection.tar.gz
     tar -xvf frozen_east_text_detection.tar.gz
 ```
 
-# to run it
+# to run it (from the build directory)
 
 ```
     ./bin/exshelf

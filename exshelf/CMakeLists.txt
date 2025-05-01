@@ -33,13 +33,24 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(opencv)
 
 FetchContent_Declare(
-        tesseract
-        GIT_REPOSITORY https://github.com/tesseract-ocr/tesseract.git
-        GIT_TAG        3.00
-        GIT_SHALLOW TRUE
-        GIT_PROGRESS TRUE
+  tesseract
+  GIT_REPOSITORY https://github.com/tesseract-ocr/tesseract.git
+  GIT_TAG        5.5.0
 )
+set(BUILD_TRAINING_TOOLS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(tesseract)
+
+# Suppress warning errors for tesseract only
+if(TARGET libtesseract)
+  target_compile_options(libtesseract PRIVATE
+    -Wno-unused-parameter
+    -Wno-error=unused-parameter
+    -Wno-error=maybe-uninitialized
+    -Wno-error=stringop-truncation
+  )
+endif()
 
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "${CMAKE_SOURCE_DIR}/../3rdParties")
@@ -58,6 +69,7 @@ add_executable(exshelf ${SRCS} ${HDRS})
 include_directories(SYSTEM ${LOCAL_INCLUDE} ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
 
 target_include_directories(exshelf PRIVATE
+  ${tesseract_BINARY_DIR}/include
   ${opencv_SOURCE_DIR}/include
   ${OPENCV_CONFIG_FILE_INCLUDE_DIR}
   ${OPENCV_MODULE_opencv_core_LOCATION}/include
@@ -76,4 +88,4 @@ target_include_directories(exshelf PRIVATE
   ${OPENCV_MODULE_opencv_video_LOCATION}/include
 )
 
-target_link_libraries(exshelf opencv_core opencv_highgui opencv_dnn tesseract ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(exshelf PRIVATE libtesseract opencv_core opencv_highgui opencv_dnn ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
