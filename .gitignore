@@ -4,3 +4,4 @@ CMakeLists.txt.user
 *.swp
 *.vscode*/
 .cache/
+3rd_parties_cache

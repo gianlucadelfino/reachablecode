@@ -4,6 +4,7 @@ project(cUDP)
 
 # This will display the full g++ command in the output.
 set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,address")
@@ -43,9 +44,6 @@ target_link_libraries(asio INTERFACE Threads::Threads)
 
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "../3rdParties")
-
-# ftrapv checks for overflow and crashes the program if it happens.
-set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv -fsanitize=undefined,address")
 
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")

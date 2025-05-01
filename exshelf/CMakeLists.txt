@@ -5,6 +5,15 @@ project(exshelf)
 # This will display the full g++ command in the output.
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined,address")
+
+if (NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
+
+set(CMAKE_CXX_STANDARD 17)
+
 # Dependencies
 find_package(PkgConfig REQUIRED)
 
@@ -23,9 +32,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(opencv)
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}")
-# Tesseract
-find_package(Tesseract REQUIRED)
+FetchContent_Declare(
+        tesseract
+        GIT_REPOSITORY https://github.com/tesseract-ocr/tesseract.git
+        GIT_TAG        3.00
+        GIT_SHALLOW TRUE
+        GIT_PROGRESS TRUE
+)
+FetchContent_MakeAvailable(tesseract)
 
 # set the 3rd parties include
 set(3RD_PARTIES_INCLUDE "${CMAKE_SOURCE_DIR}/../3rdParties")
@@ -35,23 +49,13 @@ set(LOCAL_INCLUDE "include")
 # set the common include
 set(COMMON_INCLUDE "${CMAKE_SOURCE_DIR}/../common/include")
 
-set(GCC_WARNING_FLAGS "-Wall -Werror -Wextra -pedantic")
-
-# ftrapv checks for overflow and crashes the program if it happens.
-set(GCC_DEBUG_FLAGS "-O0 -g -ftrapv -fsanitize=undefined,address")
-
-set (CMAKE_CXX_STANDARD 17)
-
-# Change this for release
-set(CMAKE_BUILD_TYPE "debug")
-
 configure_file(res/shelfTest2_small.jpg shelfTest2_small.jpg COPYONLY)
 
 set(SRCS src/main.cpp)
 
 add_executable(exshelf ${SRCS} ${HDRS})
 
-include_directories(SYSTEM ${LOCAL_INCLUDE} ${3RD_PARTIES_INCLUDE} ${TESSERACT_INCLUDE_DIR} ${COMMON_INCLUDE})
+include_directories(SYSTEM ${LOCAL_INCLUDE} ${3RD_PARTIES_INCLUDE} ${COMMON_INCLUDE})
 
 target_include_directories(exshelf PRIVATE
   ${opencv_SOURCE_DIR}/include
@@ -72,4 +76,4 @@ target_include_directories(exshelf PRIVATE
   ${OPENCV_MODULE_opencv_video_LOCATION}/include
 )
 
-target_link_libraries(exshelf opencv_core opencv_highgui opencv_dnn ${OpenCV_LIBS} ${TESSERACT_LIBRARIES} ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(exshelf opencv_core opencv_highgui opencv_dnn tesseract ${MATH_LIBS} ${CMAKE_THREAD_LIBS_INIT})
