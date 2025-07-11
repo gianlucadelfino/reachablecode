@@ -22,14 +22,6 @@ find_package(Threads)
 
 include(FetchContent)
 
-# Fetch Leptonica first (Tesseract depends on it)
-FetchContent_Declare(
-  leptonica
-  GIT_REPOSITORY https://github.com/DanBloomberg/leptonica.git
-  GIT_TAG        1.85.0  # Use a valid tag or branch
-)
-FetchContent_MakeAvailable(leptonica)
-
 # OpenCv
 FetchContent_Declare(
         opencv

@@ -25,6 +25,8 @@ jobs:
       run: cd cudp && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: doubly_mapped_lockfree_queue_build
       run: cd doubly_mapped_lockfree_queue && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
+    - name: Install libleptonica
+      run: sudo apt install -y libleptonica-dev
     - name: exshelf
       run: cd exshelf && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: neural_network_physics_build

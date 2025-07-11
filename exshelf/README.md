@@ -7,11 +7,12 @@ This is a small program that aims to help catalogue books on a bookshelf.
 The program uses OpenCV and Tesseract to look for titles in the framed image of
 a webcam and builds up a list.
 
-# to build
+# to build (adjust number of cores passed to --parallel accordingly)
 
 ```
+    sudo apt install libleptonica-dev
     cmake -B build
-    cmake --build build
+    cmake --build build --parallel 4
 
     cd build
     wget https://raw.githubusercontent.com/tesseract-ocr/tessdata/refs/heads/main/ita.traineddata
