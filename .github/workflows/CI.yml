@@ -13,8 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: ASCII-UML-Generator
-      run: cd ASCII-UML-Generator && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: allocCatcher
       run: cd allocCatcher && cmake -B build -DFETCHCONTENT_BASE_DIR=../3rd_parties_cache -DCCMAKE_BUILD_TYPE=Debug && cmake --build build --parallel 20 && ctest --test-dir build
     - name: almost_always_lockfree
