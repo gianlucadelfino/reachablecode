@@ -113,7 +113,6 @@ consteval const char* make_class_graph() {
 
 int main() {
   MyClass s;
-  constexpr auto ctx = std::meta::access_context::current();
   constexpr const char* const dot_graph_uml = make_class_graph<MyClass>();
 
   std::cout << dot_graph_uml << std::endl;
