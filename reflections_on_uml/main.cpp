@@ -101,7 +101,7 @@ consteval std::string make_class_graph_impl(std::meta::info head, std::vector<st
 
 
 template<typename U>
-consteval const char* make_class_graph() {
+consteval std::string_view make_class_graph() {
   std::string graph = "@startuml \nskinparam linetype ortho \n";
 
   std::vector<std::meta::info> already_drawn;
@@ -113,7 +113,7 @@ consteval const char* make_class_graph() {
 
 int main() {
   MyClass s;
-  constexpr const char* const dot_graph_uml = make_class_graph<MyClass>();
+  std::string_view dot_graph_uml = make_class_graph<MyClass>();
 
   std::cout << dot_graph_uml << std::endl;
 }
